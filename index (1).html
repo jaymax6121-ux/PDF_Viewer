@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Invoice Library</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600&family=Karla:wght@300;400;500;600&display=swap');
+:root {
+  --bg:#f4f1ed;--surface:#fff;--card:#faf8f5;--border:#e5dfd6;
+  --accent:#1e3a2f;--accent2:#2d5c47;--accent3:#c8a96e;
+  --text:#1a1a18;--muted:#8a8578;--light:#f0ece6;
+  --red:#c0392b;--red-bg:#fdf2f0;
+  --green:#2d7a4a;--green-bg:#f0faf4;
+  --orange:#b8620a;--orange-bg:#fef6ed;
+  --blue:#1a5c8a;--blue-bg:#eef5fb;
+  --shadow:0 2px 16px rgba(0,0,0,0.07);
+  --shadow-lg:0 8px 36px rgba(0,0,0,0.13);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Karla',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+.page{display:none;}.page.active{display:block;}
+
+/* LOGIN */
+#login-page{min-height:100vh;display:none;align-items:center;justify-content:center;background:var(--accent);}
+#login-page.active{display:flex;}
+.login-box{background:var(--surface);border-radius:16px;padding:40px 36px;width:100%;max-width:380px;box-shadow:var(--shadow-lg);}
+.login-logo{text-align:center;margin-bottom:28px;}
+.login-logo h1{font-family:'Playfair Display',serif;font-size:1.8rem;color:var(--accent);}
+.login-logo p{font-size:0.82rem;color:var(--muted);margin-top:4px;}
+.login-inp{width:100%;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:11px 14px;border-radius:8px;font-family:'Karla',sans-serif;font-size:0.92rem;outline:none;margin-bottom:12px;transition:border-color 0.2s;}
+.login-inp:focus{border-color:var(--accent2);}
+.login-btn{width:100%;padding:12px;border-radius:8px;border:none;background:var(--accent);color:#fff;font-family:'Karla',sans-serif;font-weight:600;font-size:0.95rem;cursor:pointer;transition:background 0.2s;}
+.login-btn:hover{background:var(--accent2);}
+.login-btn:disabled{opacity:0.6;cursor:not-allowed;}
+.login-err{font-size:0.78rem;color:var(--red);margin-top:8px;text-align:center;min-height:18px;}
+
+/* APP */
+#app{display:none;min-height:100vh;flex-direction:column;}
+#app.active{display:flex;}
+.topbar{background:var(--accent);padding:0 24px;display:flex;align-items:center;height:56px;gap:16px;position:sticky;top:0;z-index:100;box-shadow:var(--shadow);}
+.topbar h1{font-family:'Playfair Display',serif;font-size:1.15rem;color:#fff;white-space:nowrap;}
+.topbar h1 span{color:var(--accent3);}
+.topbar-nav{display:flex;gap:4px;flex:1;margin-left:12px;overflow-x:auto;}
+.nav-btn{background:none;border:none;color:rgba(255,255,255,0.65);padding:6px 12px;border-radius:6px;font-family:'Karla',sans-serif;font-size:0.82rem;font-weight:500;cursor:pointer;transition:all 0.15s;white-space:nowrap;}
+.nav-btn:hover,.nav-btn.active{background:rgba(255,255,255,0.18);color:#fff;}
+.topbar-right{display:flex;align-items:center;gap:10px;margin-left:auto;}
+.user-badge{font-size:0.76rem;color:rgba(255,255,255,0.7);white-space:nowrap;}
+.logout-btn{background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.2);color:#fff;padding:5px 10px;border-radius:6px;font-family:'Karla',sans-serif;font-size:0.76rem;cursor:pointer;}
+.logout-btn:hover{background:rgba(255,255,255,0.22);}
+
+.content{flex:1;max-width:1200px;margin:0 auto;padding:26px 18px;width:100%;}
+
+/* STATS */
+.stats{display:flex;gap:12px;margin-bottom:24px;flex-wrap:wrap;}
+.stat{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px 20px;flex:1;min-width:100px;box-shadow:var(--shadow);position:relative;overflow:hidden;}
+.stat::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--accent3);}
+.stat .num{font-family:'Playfair Display',serif;font-size:1.8rem;color:var(--accent);}
+.stat .lbl{font-size:0.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;margin-top:2px;}
+
+/* TOOLBAR */
+.toolbar{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;align-items:center;}
+.filter-btn{background:var(--surface);border:1px solid var(--border);color:var(--muted);padding:5px 12px;border-radius:20px;font-family:'Karla',sans-serif;font-size:0.78rem;cursor:pointer;transition:all 0.15s;white-space:nowrap;}
+.filter-btn:hover,.filter-btn.active{background:var(--accent);border-color:var(--accent);color:#fff;}
+.search-inp{background:var(--surface);border:1px solid var(--border);color:var(--text);padding:6px 13px;border-radius:20px;font-family:'Karla',sans-serif;font-size:0.8rem;outline:none;width:200px;transition:border-color 0.2s;margin-left:auto;}
+.search-inp:focus{border-color:var(--accent2);}
+.btn-primary{background:var(--accent);color:#fff;border:none;padding:7px 16px;border-radius:8px;font-family:'Karla',sans-serif;font-weight:600;font-size:0.82rem;cursor:pointer;transition:background 0.2s;white-space:nowrap;}
+.btn-primary:hover{background:var(--accent2);}
+.btn-primary:disabled{opacity:0.6;cursor:not-allowed;}
+
+/* TABLE */
+.table-wrap{background:var(--surface);border:1px solid var(--border);border-radius:12px;box-shadow:var(--shadow);overflow:auto;}
+.inv-table{width:100%;border-collapse:collapse;min-width:700px;}
+.inv-table th{text-align:left;font-size:0.68rem;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);padding:11px 13px;border-bottom:2px solid var(--border);background:var(--card);white-space:nowrap;}
+.inv-table td{padding:10px 13px;border-bottom:1px solid var(--border);font-size:0.83rem;vertical-align:middle;}
+.inv-table tr:last-child td{border-bottom:none;}
+.inv-table tbody tr:hover td{background:var(--light);}
+.fname{font-weight:500;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.amt{font-weight:600;font-family:'Playfair Display',serif;}
+.badge{font-size:0.68rem;padding:2px 9px;border-radius:20px;font-weight:600;letter-spacing:0.03em;white-space:nowrap;display:inline-block;}
+.b-processed{background:#e8f4f0;color:var(--green);}
+.b-notprocessed{background:var(--orange-bg);color:var(--orange);}
+.b-approved{background:var(--blue-bg);color:var(--blue);}
+.b-signed{background:var(--green-bg);color:var(--green);}
+.b-unsigned{background:var(--orange-bg);color:var(--orange);}
+.b-dept{background:var(--light);color:var(--accent);}
+.status-sel{background:var(--bg);border:1px solid var(--border);color:var(--text);padding:3px 7px;border-radius:6px;font-family:'Karla',sans-serif;font-size:0.76rem;outline:none;cursor:pointer;}
+.btn-sm{background:none;border:1px solid var(--border);color:var(--muted);padding:3px 9px;border-radius:6px;font-family:'Karla',sans-serif;font-size:0.74rem;cursor:pointer;transition:all 0.15s;white-space:nowrap;margin-right:3px;}
+.btn-sm:hover{border-color:var(--accent);color:var(--accent);}
+.btn-sm.danger:hover{border-color:var(--red);color:var(--red);}
+.btn-sign-now{background:var(--accent);color:#fff;border:none;padding:3px 10px;border-radius:6px;font-family:'Karla',sans-serif;font-size:0.74rem;cursor:pointer;margin-right:3px;}
+.btn-sign-now:hover{background:var(--accent2);}
+.empty-row td{text-align:center;padding:36px;color:var(--muted);}
+
+/* MODAL */
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:200;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(3px);}
+.overlay.open{display:flex;}
+.modal{background:var(--surface);border-radius:16px;padding:26px;width:100%;max-width:520px;max-height:90vh;overflow-y:auto;box-shadow:var(--shadow-lg);}
+.modal-wide{max-width:860px;}
+.modal h2{font-family:'Playfair Display',serif;font-size:1.2rem;color:var(--accent);margin-bottom:18px;}
+.fg{margin-bottom:13px;}
+.fg label{display:block;font-size:0.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:5px;font-weight:600;}
+.fg input[type=text],.fg input[type=number],.fg input[type=date],.fg select,.fg input[type=password]{width:100%;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:9px 12px;border-radius:8px;font-family:'Karla',sans-serif;font-size:0.87rem;outline:none;transition:border-color 0.2s;color-scheme:light;}
+.fg input:focus,.fg select:focus{border-color:var(--accent2);}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.upload-zone{border:2px dashed var(--border);border-radius:10px;padding:24px;text-align:center;cursor:pointer;transition:all 0.2s;background:var(--bg);}
+.upload-zone:hover,.upload-zone.over{border-color:var(--accent2);background:#f0f7f4;}
+.uz-icon{font-size:1.7rem;margin-bottom:5px;}
+.uz-text{font-size:0.8rem;color:var(--muted);}
+.uz-file{font-size:0.8rem;color:var(--accent2);font-weight:600;margin-top:4px;}
+.modal-btns{display:flex;gap:10px;margin-top:18px;}
+.modal-cancel{flex:1;padding:9px;border-radius:8px;border:1px solid var(--border);background:none;color:var(--muted);font-family:'Karla',sans-serif;font-size:0.87rem;cursor:pointer;}
+.modal-cancel:hover{border-color:var(--text);color:var(--text);}
+.modal-submit{flex:2;padding:9px;border-radius:8px;border:none;background:var(--accent);color:#fff;font-family:'Karla',sans-serif;font-weight:600;font-size:0.87rem;cursor:pointer;}
+.modal-submit:hover{background:var(--accent2);}
+.modal-submit:disabled{opacity:0.6;cursor:not-allowed;}
+.ferr{font-size:0.72rem;color:var(--red);margin-top:4px;display:none;}
+.ferr.show{display:block;}
+
+/* SIGN */
+.sign-layout{display:flex;gap:18px;flex-wrap:wrap;}
+.sign-pdf{flex:2;min-width:260px;}
+.sign-pdf iframe{width:100%;height:480px;border:1px solid var(--border);border-radius:8px;}
+.sign-form{flex:1;min-width:220px;}
+.sig-wrap{border:2px solid var(--border);border-radius:8px;background:#fff;margin-bottom:8px;}
+canvas{display:block;width:100%;touch-action:none;cursor:crosshair;}
+.canvas-hint{font-size:0.68rem;color:var(--muted);text-align:center;padding:4px;border-top:1px solid var(--border);}
+.btn-clear{background:none;border:1px solid var(--border);color:var(--muted);padding:4px 11px;border-radius:6px;font-family:'Karla',sans-serif;font-size:0.76rem;cursor:pointer;margin-bottom:10px;transition:all 0.15s;display:block;}
+.btn-clear:hover{border-color:var(--red);color:var(--red);}
+.already-signed{background:var(--green-bg);border:1px solid #b8e8cc;border-radius:10px;padding:16px;text-align:center;}
+.already-signed .chk{font-size:1.8rem;margin-bottom:6px;}
+.already-signed h3{font-family:'Playfair Display',serif;color:var(--green);margin-bottom:3px;}
+.already-signed p{font-size:0.8rem;color:var(--muted);}
+.sig-sm{max-width:100%;height:32px;object-fit:contain;margin-top:5px;border-radius:4px;background:#fff;border:1px solid var(--border);padding:2px;}
+
+/* VENDOR */
+.vendor-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;margin-top:18px;}
+.vendor-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 14px;display:flex;align-items:center;gap:8px;box-shadow:var(--shadow);}
+.vendor-name{flex:1;font-weight:500;font-size:0.85rem;}
+.v-inactive{opacity:0.42;text-decoration:line-through;}
+.btn-toggle{background:none;border:1px solid var(--border);color:var(--muted);padding:3px 9px;border-radius:5px;font-size:0.72rem;cursor:pointer;transition:all 0.15s;}
+.btn-toggle:hover{border-color:var(--accent);color:var(--accent);}
+.btn-del-v{background:none;border:none;color:var(--muted);cursor:pointer;font-size:0.88rem;padding:2px 3px;border-radius:4px;transition:color 0.15s;}
+.btn-del-v:hover{color:var(--red);}
+.add-vendor-row{display:flex;gap:10px;margin-top:14px;align-items:center;}
+.add-vendor-inp{flex:1;background:var(--surface);border:1px solid var(--border);color:var(--text);padding:8px 12px;border-radius:8px;font-family:'Karla',sans-serif;font-size:0.86rem;outline:none;transition:border-color 0.2s;}
+.add-vendor-inp:focus{border-color:var(--accent2);}
+
+/* SETTINGS */
+.chpw-box{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:22px;max-width:380px;margin-top:20px;box-shadow:var(--shadow);}
+.chpw-box h3{font-family:'Playfair Display',serif;color:var(--accent);margin-bottom:14px;}
+
+/* TOAST */
+.toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(80px);padding:10px 20px;border-radius:10px;font-size:0.83rem;font-family:'Karla',sans-serif;z-index:999;transition:transform 0.3s,opacity 0.3s;opacity:0;pointer-events:none;max-width:92vw;text-align:center;}
+.toast.error{background:var(--red-bg);border:1px solid #e8b0a8;color:var(--red);}
+.toast.success{background:var(--green-bg);border:1px solid #b8e8cc;color:var(--green);}
+.toast.warn{background:var(--orange-bg);border:1px solid #f0c88a;color:var(--orange);}
+.toast.show{transform:translateX(-50%) translateY(0);opacity:1;}
+.spinner{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,0.3);border-top-color:#fff;border-radius:50%;animation:spin 0.7s linear infinite;vertical-align:middle;margin-right:5px;}
+@keyframes spin{to{transform:rotate(360deg);}}
+</style>
+</head>
+<body>
+
+<div id="login-page" class="active">
+  <div class="login-box">
+    <div class="login-logo">
+      <h1>&#128196; Invoice <span style="color:var(--accent3)">Library</span></h1>
+      <p>Sign in to access your invoices</p>
+    </div>
+    <input type="text"     class="login-inp" id="l-user" placeholder="Username" onkeydown="if(event.key==='Enter')doLogin()">
+    <input type="password" class="login-inp" id="l-pass" placeholder="Password" onkeydown="if(event.key==='Enter')doLogin()">
+    <button class="login-btn" id="login-btn" onclick="doLogin()">Sign In</button>
+    <div class="login-err" id="login-err"></div>
+  </div>
+</div>
+
+<div id="app">
+  <div class="topbar">
+    <h1>&#128196; Invoice <span>Library</span></h1>
+    <div class="topbar-nav" id="topbar-nav"></div>
+    <div class="topbar-right">
+      <span class="user-badge" id="user-badge"></span>
+      <button class="logout-btn" onclick="doLogout()">Sign Out</button>
+    </div>
+  </div>
+
+  <div class="content page active" id="page-invoices">
+    <div class="stats" id="stats-row"></div>
+    <div class="toolbar" id="toolbar-row"></div>
+    <div class="table-wrap">
+      <table class="inv-table">
+        <thead id="inv-thead"></thead>
+        <tbody id="inv-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="content page" id="page-vendors">
+    <h2 style="font-family:'Playfair Display',serif;color:var(--accent);margin-bottom:5px;">Vendor Management</h2>
+    <p style="color:var(--muted);font-size:0.82rem;">Add or remove vendors. Only active vendors appear when uploading.</p>
+    <div class="add-vendor-row">
+      <input type="text" class="add-vendor-inp" id="new-vendor-inp" placeholder="New vendor name..." onkeydown="if(event.key==='Enter')addVendor()">
+      <button class="btn-primary" onclick="addVendor()">+ Add Vendor</button>
+    </div>
+    <div class="vendor-grid" id="vendor-grid"></div>
+  </div>
+
+  <div class="content page" id="page-settings">
+    <h2 style="font-family:'Playfair Display',serif;color:var(--accent);margin-bottom:5px;">Settings</h2>
+    <div class="chpw-box">
+      <h3>Change Password</h3>
+      <div class="fg"><label>New Password</label><input type="password" id="new-pw" placeholder="Enter new password"></div>
+      <div class="fg"><label>Confirm Password</label><input type="password" id="confirm-pw" placeholder="Confirm new password"></div>
+      <div class="ferr" id="pw-err"></div>
+      <button class="btn-primary" onclick="changePassword()" style="margin-top:6px;">Update Password</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="upload-modal">
+  <div class="modal">
+    <h2>Upload Invoice</h2>
+    <div class="fg"><label>Invoice Name</label><input type="text" id="u-name" placeholder="e.g. INV-1042 Office Supplies"><div class="ferr" id="eu-name"></div></div>
+    <div class="row2">
+      <div class="fg"><label>Vendor</label><select id="u-vendor"><option value="">-- Select vendor --</option></select><div class="ferr" id="eu-vendor"></div></div>
+      <div class="fg"><label>Department</label><select id="u-dept"><option value="">-- Select dept --</option></select><div class="ferr" id="eu-dept"></div></div>
+    </div>
+    <div class="row2">
+      <div class="fg"><label>Invoice Date</label><input type="date" id="u-date"><div class="ferr" id="eu-date"></div></div>
+      <div class="fg"><label>Amount ($)</label><input type="number" id="u-amount" placeholder="0.00" min="0" step="0.01"><div class="ferr" id="eu-amount"></div></div>
+    </div>
+    <div class="fg">
+      <label>PDF File</label>
+      <div class="upload-zone" id="upload-zone" onclick="document.getElementById('file-inp').click()" ondragover="onDragOver(event)" ondrop="onDrop(event)">
+        <div class="uz-icon">&#128206;</div>
+        <div class="uz-text">Click to browse or drag and drop PDF here</div>
+        <div class="uz-file" id="uz-file"></div>
+      </div>
+      <input type="file" id="file-inp" accept=".pdf" style="display:none" onchange="onFileSelect(this)">
+      <div class="ferr" id="eu-file"></div>
+    </div>
+    <div class="modal-btns">
+      <button class="modal-cancel" onclick="closeModal('upload-modal')">Cancel</button>
+      <button class="modal-submit" id="upload-btn" onclick="submitUpload()">Upload Invoice</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="sign-modal">
+  <div class="modal modal-wide">
+    <h2 id="sign-title">Invoice</h2>
+    <div class="sign-layout">
+      <div class="sign-pdf"><iframe id="sign-frame" src="about:blank"></iframe></div>
+      <div class="sign-form">
+        <div id="sign-form-inner">
+          <div class="fg"><label>Your Full Name</label><input type="text" id="signer-name" placeholder="Full name"><div class="ferr" id="e-signer"></div></div>
+          <div style="font-size:0.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.07em;font-weight:600;margin-bottom:6px;">Draw Signature</div>
+          <div class="sig-wrap"><canvas id="sig-canvas" width="260" height="110"></canvas><div class="canvas-hint">Sign with mouse or finger</div></div>
+          <div class="ferr" id="e-sig"></div>
+          <button class="btn-clear" onclick="clearSig()">x Clear</button>
+          <button class="btn-primary" id="submit-sig-btn" onclick="submitSignature()" style="width:100%;">Submit Sign-Off</button>
+        </div>
+        <div id="already-signed-box" style="display:none">
+          <div class="already-signed">
+            <div class="chk">&#10003;</div>
+            <h3>Signed</h3>
+            <p id="as-name"></p>
+            <p id="as-date" style="margin-top:3px;"></p>
+            <img id="as-sig" class="sig-sm" src="" alt="sig" style="display:none">
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-btns" style="margin-top:14px;"><button class="modal-cancel" onclick="closeModal('sign-modal')">Close</button></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+var SHEET_URL = 'https://script.google.com/macros/s/AKfycbxJON480CeQ_EcpChLdioRcAK5t89wKNutXzocGmiE2B5wSWxGOOOnnRUEIrnsa4z4mmQ/exec';
+var DEPTS = ['01 GM','02 CO','03 QM','04 PR','041 WM','042 WD','043 FA','05 MK','06 SL','07 PR','08 LG','081 TX','082 A2','09 IT','10 HR'];
+var session   = JSON.parse(sessionStorage.getItem('invSess') || 'null');
+var invoices  = [];
+var vendors   = [];
+var selPDF    = null;
+var curFilter = 'all';
+var curSignId = null;
+var sigCanvas, sigCtx, sigDrawing = false;
+var toastTmr  = null;
+
+function toast(msg, type) {
+  var t = document.getElementById('toast');
+  t.textContent = msg; t.className = 'toast ' + (type||'error') + ' show';
+  clearTimeout(toastTmr);
+  toastTmr = setTimeout(function(){ t.classList.remove('show'); }, 3500);
+}
+function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function showErr(id,msg){ var e=document.getElementById(id); if(e){e.textContent='! '+msg;e.classList.add('show');} }
+function clearErr(id){ var e=document.getElementById(id); if(e){e.textContent='';e.classList.remove('show');} }
+function fmtMoney(n){ return '$'+parseFloat(n||0).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g,','); }
+function todayStr(){ return new Date().toISOString().split('T')[0]; }
+
+function doLogin() {
+  var user = document.getElementById('l-user').value.trim();
+  var pass = document.getElementById('l-pass').value.trim();
+  var btn  = document.getElementById('login-btn');
+  var err  = document.getElementById('login-err');
+  err.textContent = '';
+  if(!user||!pass){ err.textContent = 'Please enter username and password.'; return; }
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>Signing in...';
+  fetch(SHEET_URL + '?action=login&username=' + encodeURIComponent(user) + '&password=' + encodeURIComponent(pass))
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      btn.disabled = false; btn.textContent = 'Sign In';
+      if(d.status === 'ok'){
+        session = { username: d.username, role: d.role, department: d.department };
+        sessionStorage.setItem('invSess', JSON.stringify(session));
+        startApp();
+      } else { err.textContent = d.message || 'Invalid credentials.'; }
+    })
+    .catch(function(){ btn.disabled=false; btn.textContent='Sign In'; err.textContent='Connection error. Try again.'; });
+}
+
+function doLogout() {
+  session = null; sessionStorage.removeItem('invSess');
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('login-page').classList.add('active');
+  document.getElementById('l-user').value = '';
+  document.getElementById('l-pass').value = '';
+}
+
+function startApp() {
+  document.getElementById('login-page').classList.remove('active');
+  document.getElementById('app').style.display = 'flex';
+  document.getElementById('user-badge').textContent = session.username + ' | ' + (session.department === 'ALL' ? session.role : session.department);
+  buildNav();
+  initCanvas();
+  loadData();
+}
+
+function buildNav() {
+  var nav = document.getElementById('topbar-nav');
+  nav.innerHTML = '';
+  var pages = [['page-invoices','Invoices']];
+  if(session.role === 'admin' || session.role === 'accounting') pages.push(['page-vendors','Vendors']);
+  pages.push(['page-settings','Settings']);
+  pages.forEach(function(p, idx){
+    var b = document.createElement('button');
+    b.className = 'nav-btn' + (idx === 0 ? ' active' : '');
+    b.textContent = p[1];
+    b.dataset.page = p[0];
+    b.onclick = function(){ showPage(p[0]); };
+    nav.appendChild(b);
+  });
+}
+
+function showPage(id) {
+  document.querySelectorAll('.content.page').forEach(function(p){ p.classList.remove('active'); });
+  document.getElementById(id).classList.add('active');
+  document.querySelectorAll('.nav-btn').forEach(function(b){ b.classList.toggle('active', b.dataset.page === id); });
+  if(id === 'page-vendors') renderVendors();
+}
+
+function loadData() {
+  fetch(SHEET_URL + '?action=getAll')
+    .then(function(r){ return r.json(); })
+    .then(function(d){ invoices = d.invoices||[]; vendors = d.vendors||[]; renderInvoices(); renderVendors(); })
+    .catch(function(){ toast('Could not load data. Check connection.','error'); });
+}
+
+function renderInvoices() {
+  var search  = document.getElementById('search-inp') ? document.getElementById('search-inp').value.toLowerCase() : '';
+  var canAll  = session.role === 'admin' || session.role === 'accounting';
+  var isAcct  = session.role === 'accounting' || session.role === 'admin';
+
+  var visible = invoices.filter(function(inv){
+    if(!canAll && inv.department !== session.department) return false;
+    if(curFilter === 'all')          return true;
+    if(curFilter === 'signed')       return inv.signed === 'Yes';
+    if(curFilter === 'unsigned')     return inv.signed !== 'Yes';
+    if(curFilter === 'processed')    return inv.status === 'Processed';
+    if(curFilter === 'notprocessed') return inv.status === 'Not Processed';
+    if(curFilter === 'approved')     return inv.status === 'Approved';
+    return inv.vendor === curFilter || inv.department === curFilter;
+  }).filter(function(inv){
+    if(!search) return true;
+    return (inv.fileName||'').toLowerCase().includes(search) ||
+           (inv.vendor||'').toLowerCase().includes(search) ||
+           (inv.department||'').toLowerCase().includes(search) ||
+           String(inv.amount||'').includes(search);
+  });
+
+  var myInvs = canAll ? invoices : invoices.filter(function(i){ return i.department === session.department; });
+  document.getElementById('stats-row').innerHTML =
+    '<div class="stat"><div class="num">' + myInvs.length + '</div><div class="lbl">Total</div></div>' +
+    '<div class="stat"><div class="num">' + myInvs.filter(function(i){ return i.signed==='Yes'; }).length + '</div><div class="lbl">Signed</div></div>' +
+    '<div class="stat"><div class="num">' + myInvs.filter(function(i){ return i.signed!=='Yes'; }).length + '</div><div class="lbl">Unsigned</div></div>' +
+    (isAcct ? '<div class="stat"><div class="num">' + myInvs.filter(function(i){ return i.status==='Approved'; }).length + '</div><div class="lbl">Approved</div></div>' : '');
+
+  buildToolbar();
+
+  document.getElementById('inv-thead').innerHTML = '<tr>' +
+    '<th>Invoice Name</th><th>Vendor</th><th>Dept</th><th>Date</th><th>Amount</th>' +
+    (isAcct ? '<th>Status</th>' : '') + '<th>Signed</th><th>Actions</th></tr>';
+
+  var tbody = document.getElementById('inv-tbody');
+  tbody.innerHTML = '';
+  if(visible.length === 0){ tbody.innerHTML = '<tr class="empty-row"><td colspan="9">No invoices found.</td></tr>'; return; }
+
+  visible.slice().reverse().forEach(function(inv){
+    var tr = document.createElement('tr');
+    var statusTd = '';
+    if(isAcct){
+      statusTd = '<td><select class="status-sel" onchange="updateStatus(\'' + inv.id + '\',this.value)">' +
+        ['Not Processed','Processed','Approved'].map(function(s){
+          return '<option value="' + s + '"' + (inv.status===s?' selected':'') + '>' + s + '</option>';
+        }).join('') + '</select></td>';
+    }
+    var signBadge = inv.signed === 'Yes'
+      ? '<span class="badge b-signed">Signed</span>'
+      : '<span class="badge b-unsigned">Pending</span>';
+    var actions = '<button class="btn-sm" onclick="viewInvoice(\'' + inv.id + '\')">View</button>';
+    if(session.role === 'manager' && inv.signed !== 'Yes') actions += '<button class="btn-sign-now" onclick="openSignModal(\'' + inv.id + '\',false)">Sign</button>';
+    if(session.role === 'admin') actions += '<button class="btn-sm danger" onclick="delInvoice(\'' + inv.id + '\')">Del</button>';
+    tr.innerHTML =
+      '<td class="fname" title="' + esc(inv.fileName) + '">' + esc(inv.fileName) + '</td>' +
+      '<td>' + esc(inv.vendor) + '</td>' +
+      '<td><span class="badge b-dept">' + esc(inv.department) + '</span></td>' +
+      '<td>' + esc(inv.date) + '</td>' +
+      '<td class="amt">' + fmtMoney(inv.amount) + '</td>' +
+      statusTd +
+      '<td>' + signBadge + '</td>' +
+      '<td>' + actions + '</td>';
+    tbody.appendChild(tr);
+  });
+}
+
+function buildToolbar() {
+  var canAll    = session.role === 'admin' || session.role === 'accounting';
+  var isAcct    = session.role === 'accounting' || session.role === 'admin';
+  var canUpload = session.role === 'admin' || session.role === 'accounting';
+  var html = '<button class="filter-btn' + (curFilter==='all'?' active':'') + '" onclick="setFilter(\'all\',this)">All</button>';
+  if(canAll){
+    DEPTS.forEach(function(d){
+      html += '<button class="filter-btn' + (curFilter===d?' active':'') + '" onclick="setFilter(\'' + d + '\',this)">' + d + '</button>';
+    });
+    vendors.filter(function(v){ return v.active==='Yes'; }).forEach(function(v){
+      html += '<button class="filter-btn' + (curFilter===v.name?' active':'') + '" onclick="setFilter(\'' + v.name.replace(/'/g,"\\'") + '\',this)">' + esc(v.name) + '</button>';
+    });
+  }
+  html += '<button class="filter-btn' + (curFilter==='unsigned'?' active':'') + '" onclick="setFilter(\'unsigned\',this)">Unsigned</button>';
+  html += '<button class="filter-btn' + (curFilter==='signed'?' active':'') + '" onclick="setFilter(\'signed\',this)">Signed</button>';
+  if(isAcct){
+    html += '<button class="filter-btn' + (curFilter==='notprocessed'?' active':'') + '" onclick="setFilter(\'notprocessed\',this)">Not Processed</button>';
+    html += '<button class="filter-btn' + (curFilter==='processed'?' active':'') + '" onclick="setFilter(\'processed\',this)">Processed</button>';
+    html += '<button class="filter-btn' + (curFilter==='approved'?' active':'') + '" onclick="setFilter(\'approved\',this)">Approved</button>';
+  }
+  html += '<input type="text" class="search-inp" id="search-inp" placeholder="Search invoices..." oninput="renderInvoices()">';
+  if(canUpload) html += '<button class="btn-primary" onclick="openUploadModal()">+ Upload Invoice</button>';
+  document.getElementById('toolbar-row').innerHTML = html;
+}
+
+function setFilter(f){ curFilter = f; renderInvoices(); }
+
+function openUploadModal() {
+  selPDF = null;
+  document.getElementById('u-name').value = '';
+  document.getElementById('u-amount').value = '';
+  document.getElementById('u-date').value = todayStr();
+  document.getElementById('uz-file').textContent = '';
+  document.getElementById('file-inp').value = '';
+  ['eu-name','eu-vendor','eu-dept','eu-date','eu-amount','eu-file'].forEach(clearErr);
+  var vsel = document.getElementById('u-vendor');
+  vsel.innerHTML = '<option value="">-- Select vendor --</option>';
+  vendors.filter(function(v){ return v.active==='Yes'||v.active===true; }).forEach(function(v){
+    var o = document.createElement('option'); o.value = v.name; o.textContent = v.name; vsel.appendChild(o);
+  });
+  var dsel = document.getElementById('u-dept');
+  dsel.innerHTML = '<option value="">-- Select dept --</option>';
+  var depts = (session.role==='admin'||session.role==='accounting') ? DEPTS : [session.department];
+  depts.forEach(function(d){ var o=document.createElement('option'); o.value=d; o.textContent=d; dsel.appendChild(o); });
+  if(depts.length === 1) dsel.value = depts[0];
+  document.getElementById('upload-modal').classList.add('open');
+}
+
+function closeModal(id){ document.getElementById(id).classList.remove('open'); }
+
+function onFileSelect(inp){
+  var file = inp.files[0]; if(!file) return;
+  if(file.type !== 'application/pdf'){ showErr('eu-file','Only PDF files allowed.'); return; }
+  if(file.size > 5*1024*1024){ showErr('eu-file','File too large. Max 5MB.'); return; }
+  var r = new FileReader();
+  r.onload = function(e){ selPDF = {name:file.name, base64:e.target.result}; document.getElementById('uz-file').textContent = 'Selected: '+file.name; clearErr('eu-file'); };
+  r.readAsDataURL(file);
+}
+function onDragOver(e){ e.preventDefault(); document.getElementById('upload-zone').classList.add('over'); }
+function onDrop(e){
+  e.preventDefault(); document.getElementById('upload-zone').classList.remove('over');
+  var file = e.dataTransfer.files[0]; if(!file) return;
+  try{ var dt=new DataTransfer(); dt.items.add(file); document.getElementById('file-inp').files=dt.files; }catch(ex){}
+  onFileSelect(document.getElementById('file-inp'));
+}
+
+function submitUpload(){
+  var name   = document.getElementById('u-name').value.trim();
+  var vendor = document.getElementById('u-vendor').value;
+  var dept   = document.getElementById('u-dept').value;
+  var date   = document.getElementById('u-date').value;
+  var amount = document.getElementById('u-amount').value;
+  var valid  = true;
+  ['eu-name','eu-vendor','eu-dept','eu-date','eu-amount','eu-file'].forEach(clearErr);
+  if(!name)                           { showErr('eu-name',  'Invoice name is required.');  valid=false; }
+  if(!vendor)                         { showErr('eu-vendor','Please select a vendor.');     valid=false; }
+  if(!dept)                           { showErr('eu-dept',  'Please select a department.'); valid=false; }
+  if(!date)                           { showErr('eu-date',  'Please pick a date.');         valid=false; }
+  if(date > todayStr())               { showErr('eu-date',  'Date cannot be in the future.'); valid=false; }
+  if(!amount||parseFloat(amount)<=0)  { showErr('eu-amount','Enter a valid amount.');       valid=false; }
+  if(!selPDF)                         { showErr('eu-file',  'Please select a PDF file.');   valid=false; }
+  if(!valid) return;
+  var btn = document.getElementById('upload-btn');
+  btn.disabled=true; btn.innerHTML='<span class="spinner"></span>Uploading...';
+  var id = 'inv-' + Date.now();
+  fetch(SHEET_URL, { method:'POST', body:JSON.stringify({action:'saveInvoice',id:id,fileName:name,vendor:vendor,department:dept,date:date,amount:amount,uploadedBy:session.username,uploadDate:todayStr(),pdfData:selPDF.base64}), headers:{'Content-Type':'text/plain'} })
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      btn.disabled=false; btn.textContent='Upload Invoice';
+      if(d.status==='ok'){
+        invoices.push({id:id,fileName:name,vendor:vendor,department:dept,date:date,amount:amount,status:'Not Processed',uploadedBy:session.username,uploadDate:todayStr(),pdfData:selPDF.base64,signed:'No',signedBy:'',signature:'',signDate:''});
+        closeModal('upload-modal'); renderInvoices();
+        toast('Invoice uploaded successfully!','success');
+      } else if(d.status==='duplicate'){
+        toast('Duplicate: '+d.message,'warn');
+      } else { toast('Upload failed. Try again.','error'); }
+    })
+    .catch(function(){ btn.disabled=false; btn.textContent='Upload Invoice'; toast('Network error.','error'); });
+}
+
+function updateStatus(id, status){
+  fetch(SHEET_URL, { method:'POST', body:JSON.stringify({action:'updateStatus',id:id,status:status}), headers:{'Content-Type':'text/plain'} })
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      if(d.status==='ok'){ var inv=invoices.filter(function(i){ return i.id===id; })[0]; if(inv) inv.status=status; toast('Status updated to '+status,'success'); renderInvoices(); }
+    })
+    .catch(function(){ toast('Could not update status.','error'); });
+}
+
+function viewInvoice(id){ openSignModal(id, true); }
+
+function openSignModal(id, viewOnly){
+  var inv = invoices.filter(function(i){ return i.id===id; })[0]; if(!inv) return;
+  curSignId = id;
+  document.getElementById('sign-title').textContent = inv.fileName;
+  document.getElementById('sign-frame').src = inv.pdfData || 'about:blank';
+  if(inv.signed==='Yes' || viewOnly){
+    document.getElementById('sign-form-inner').style.display = 'none';
+    document.getElementById('already-signed-box').style.display = 'block';
+    document.getElementById('as-name').textContent = inv.signed==='Yes' ? 'Signed by '+inv.signedBy : 'View Only';
+    document.getElementById('as-date').textContent = inv.signDate || '';
+    var sigImg = document.getElementById('as-sig');
+    if(inv.signature){ sigImg.src=inv.signature; sigImg.style.display=''; } else { sigImg.style.display='none'; }
+  } else {
+    document.getElementById('sign-form-inner').style.display = 'block';
+    document.getElementById('already-signed-box').style.display = 'none';
+    document.getElementById('signer-name').value = '';
+    ['e-signer','e-sig'].forEach(clearErr);
+    clearSig();
+  }
+  document.getElementById('sign-modal').classList.add('open');
+}
+
+function initCanvas(){
+  sigCanvas = document.getElementById('sig-canvas');
+  sigCtx = sigCanvas.getContext('2d');
+  sigCtx.strokeStyle='#1a1a18'; sigCtx.lineWidth=2.2; sigCtx.lineCap='round'; sigCtx.lineJoin='round';
+  function pos(e){ var r=sigCanvas.getBoundingClientRect(),sx=sigCanvas.width/r.width,sy=sigCanvas.height/r.height,src=e.touches?e.touches[0]:e; return {x:(src.clientX-r.left)*sx,y:(src.clientY-r.top)*sy}; }
+  sigCanvas.addEventListener('mousedown', function(e){ sigDrawing=true; var p=pos(e); sigCtx.beginPath(); sigCtx.moveTo(p.x,p.y); });
+  sigCanvas.addEventListener('mousemove', function(e){ if(!sigDrawing)return; var p=pos(e); sigCtx.lineTo(p.x,p.y); sigCtx.stroke(); });
+  sigCanvas.addEventListener('mouseup',   function(){ sigDrawing=false; });
+  sigCanvas.addEventListener('mouseleave',function(){ sigDrawing=false; });
+  sigCanvas.addEventListener('touchstart',function(e){ e.preventDefault(); sigDrawing=true; var p=pos(e); sigCtx.beginPath(); sigCtx.moveTo(p.x,p.y); },{passive:false});
+  sigCanvas.addEventListener('touchmove', function(e){ e.preventDefault(); if(!sigDrawing)return; var p=pos(e); sigCtx.lineTo(p.x,p.y); sigCtx.stroke(); },{passive:false});
+  sigCanvas.addEventListener('touchend',  function(){ sigDrawing=false; });
+}
+function clearSig(){ if(sigCtx) sigCtx.clearRect(0,0,sigCanvas.width,sigCanvas.height); }
+function sigEmpty(){ if(!sigCanvas)return true; var d=sigCtx.getImageData(0,0,sigCanvas.width,sigCanvas.height).data; for(var i=3;i<d.length;i+=4){if(d[i]>0)return false;} return true; }
+
+function submitSignature(){
+  var name  = document.getElementById('signer-name').value.trim();
+  var valid = true;
+  ['e-signer','e-sig'].forEach(clearErr);
+  if(!name)      { showErr('e-signer','Please enter your full name.'); valid=false; }
+  if(sigEmpty()) { showErr('e-sig','Please draw your signature.');     valid=false; }
+  if(!valid) return;
+  var sigData  = sigCanvas.toDataURL('image/png');
+  var signDate = new Date().toLocaleDateString('en-US')+' '+new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'});
+  var btn = document.getElementById('submit-sig-btn');
+  btn.disabled=true; btn.innerHTML='<span class="spinner"></span>Submitting...';
+  fetch(SHEET_URL, { method:'POST', body:JSON.stringify({action:'saveSignature',id:curSignId,signedBy:name,signature:sigData,signDate:signDate}), headers:{'Content-Type':'text/plain'} })
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      btn.disabled=false; btn.textContent='Submit Sign-Off';
+      if(d.status==='ok'){
+        var inv=invoices.filter(function(i){ return i.id===curSignId; })[0];
+        if(inv){ inv.signed='Yes'; inv.signedBy=name; inv.signature=sigData; inv.signDate=signDate; }
+        document.getElementById('sign-form-inner').style.display='none';
+        document.getElementById('already-signed-box').style.display='block';
+        document.getElementById('as-name').textContent='Signed by '+name;
+        document.getElementById('as-date').textContent='on '+signDate;
+        var si=document.getElementById('as-sig'); si.src=sigData; si.style.display='';
+        renderInvoices(); toast('Signed successfully!','success');
+      } else { toast('Could not save signature. Try again.','error'); }
+    })
+    .catch(function(){ btn.disabled=false; btn.textContent='Submit Sign-Off'; toast('Network error.','error'); });
+}
+
+function delInvoice(id){
+  if(!confirm('Delete this invoice? This cannot be undone.')) return;
+  invoices = invoices.filter(function(i){ return i.id!==id; });
+  renderInvoices(); toast('Deleted locally.','warn');
+}
+
+function renderVendors(){
+  var grid = document.getElementById('vendor-grid'); if(!grid) return;
+  grid.innerHTML = '';
+  if(vendors.length===0){ grid.innerHTML='<p style="color:var(--muted);font-size:0.83rem;margin-top:12px;">No vendors yet.</p>'; return; }
+  vendors.forEach(function(v){
+    var isActive = v.active==='Yes'||v.active===true;
+    var card = document.createElement('div'); card.className='vendor-card';
+    card.innerHTML = '<span class="vendor-name'+(isActive?'':' v-inactive')+'">'+esc(v.name)+'</span>'+
+      '<button class="btn-toggle" onclick="toggleVendor(\''+v.id+'\',\''+(isActive?'No':'Yes')+'\')">'+( isActive?'Disable':'Enable')+'</button>'+
+      '<button class="btn-del-v" onclick="deleteVendor(\''+v.id+'\')">x</button>';
+    grid.appendChild(card);
+  });
+}
+
+function addVendor(){
+  var inp  = document.getElementById('new-vendor-inp');
+  var name = inp.value.trim();
+  if(!name){ toast('Please enter a vendor name.','error'); return; }
+  var id = 'ven-'+Date.now();
+  fetch(SHEET_URL, { method:'POST', body:JSON.stringify({action:'saveVendor',id:id,name:name}), headers:{'Content-Type':'text/plain'} })
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      if(d.status==='ok'){ vendors.push({id:id,name:name,active:'Yes'}); inp.value=''; renderVendors(); toast('Vendor added!','success'); }
+      else if(d.status==='duplicate'){ toast('Vendor already exists.','warn'); }
+      else { toast('Could not add vendor.','error'); }
+    })
+    .catch(function(){ toast('Network error.','error'); });
+}
+
+function toggleVendor(id,active){
+  fetch(SHEET_URL, { method:'POST', body:JSON.stringify({action:'toggleVendor',id:id,active:active}), headers:{'Content-Type':'text/plain'} })
+    .then(function(r){ return r.json(); })
+    .then(function(d){ if(d.status==='ok'){ var v=vendors.filter(function(x){ return x.id===id; })[0]; if(v)v.active=active; renderVendors(); } });
+}
+
+function deleteVendor(id){
+  if(!confirm('Delete this vendor?')) return;
+  fetch(SHEET_URL, { method:'POST', body:JSON.stringify({action:'deleteVendor',id:id}), headers:{'Content-Type':'text/plain'} })
+    .then(function(r){ return r.json(); })
+    .then(function(d){ if(d.status==='ok'){ vendors=vendors.filter(function(v){ return v.id!==id; }); renderVendors(); toast('Vendor deleted.','warn'); } });
+}
+
+function changePassword(){
+  var np = document.getElementById('new-pw').value.trim();
+  var cp = document.getElementById('confirm-pw').value.trim();
+  clearErr('pw-err');
+  if(!np)      { showErr('pw-err','Please enter a new password.'); return; }
+  if(np.length<6){ showErr('pw-err','Password must be at least 6 characters.'); return; }
+  if(np !== cp){ showErr('pw-err','Passwords do not match.'); return; }
+  fetch(SHEET_URL, { method:'POST', body:JSON.stringify({action:'changePassword',username:session.username,newPassword:np}), headers:{'Content-Type':'text/plain'} })
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      if(d.status==='ok'){ document.getElementById('new-pw').value=''; document.getElementById('confirm-pw').value=''; toast('Password updated!','success'); }
+      else { toast('Could not update password.','error'); }
+    })
+    .catch(function(){ toast('Network error.','error'); });
+}
+
+window.addEventListener('load', function(){ if(session) startApp(); });
+</script>
+</body>
+</html>
