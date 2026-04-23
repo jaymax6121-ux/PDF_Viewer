@@ -1,0 +1,1071 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Invoice Library</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600&family=Karla:wght@300;400;500;600&display=swap');
+:root {
+  --bg:#f4f1ed;--surface:#fff;--card:#faf8f5;--border:#e5dfd6;
+  --accent:#1e3a2f;--accent2:#2d5c47;--accent3:#c8a96e;
+  --text:#1a1a18;--muted:#8a8578;--light:#f0ece6;
+  --red:#c0392b;--red-bg:#fdf2f0;
+  --green:#2d7a4a;--green-bg:#f0faf4;
+  --orange:#b8620a;--orange-bg:#fef6ed;
+  --blue:#1a5c8a;--blue-bg:#eef5fb;
+  --purple:#6b3fa0;--purple-bg:#f5f0fb;
+  --shadow:0 2px 16px rgba(0,0,0,0.07);
+  --shadow-lg:0 8px 36px rgba(0,0,0,0.13);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Karla',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+.page{display:none;}.page.active{display:block;}
+
+/* LOGIN */
+#login-page{min-height:100vh;display:none;align-items:center;justify-content:center;background:var(--accent);}
+#login-page.active{display:flex;}
+.login-box{background:var(--surface);border-radius:16px;padding:40px 36px;width:100%;max-width:380px;box-shadow:var(--shadow-lg);}
+.login-logo{text-align:center;margin-bottom:28px;}
+.login-logo h1{font-family:'Playfair Display',serif;font-size:1.8rem;color:var(--accent);}
+.login-logo p{font-size:0.82rem;color:var(--muted);margin-top:4px;}
+.login-inp{width:100%;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:11px 14px;border-radius:8px;font-family:'Karla',sans-serif;font-size:0.92rem;outline:none;margin-bottom:12px;transition:border-color 0.2s;}
+.login-inp:focus{border-color:var(--accent2);}
+.login-btn{width:100%;padding:12px;border-radius:8px;border:none;background:var(--accent);color:#fff;font-family:'Karla',sans-serif;font-weight:600;font-size:0.95rem;cursor:pointer;transition:background 0.2s;}
+.login-btn:hover{background:var(--accent2);}
+.login-btn:disabled{opacity:0.6;cursor:not-allowed;}
+.login-err{font-size:0.78rem;color:var(--red);margin-top:8px;text-align:center;min-height:18px;}
+
+/* APP */
+#app{display:none;min-height:100vh;flex-direction:column;}
+#app.active{display:flex;}
+.topbar{background:var(--accent);padding:0 24px;display:flex;align-items:center;height:56px;gap:12px;position:sticky;top:0;z-index:100;box-shadow:var(--shadow);}
+.topbar h1{font-family:'Playfair Display',serif;font-size:1.1rem;color:#fff;white-space:nowrap;}
+.topbar h1 span{color:var(--accent3);}
+.topbar-nav{display:flex;gap:3px;flex:1;margin-left:10px;overflow-x:auto;}
+.nav-btn{background:none;border:none;color:rgba(255,255,255,0.65);padding:6px 11px;border-radius:6px;font-family:'Karla',sans-serif;font-size:0.8rem;font-weight:500;cursor:pointer;transition:all 0.15s;white-space:nowrap;}
+.nav-btn:hover,.nav-btn.active{background:rgba(255,255,255,0.18);color:#fff;}
+.topbar-right{display:flex;align-items:center;gap:10px;margin-left:auto;}
+.user-badge{font-size:0.74rem;color:rgba(255,255,255,0.7);white-space:nowrap;max-width:200px;overflow:hidden;text-overflow:ellipsis;}
+.logout-btn{background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.2);color:#fff;padding:5px 10px;border-radius:6px;font-family:'Karla',sans-serif;font-size:0.74rem;cursor:pointer;white-space:nowrap;}
+.logout-btn:hover{background:rgba(255,255,255,0.22);}
+.content{flex:1;max-width:1300px;margin:0 auto;padding:24px 18px;width:100%;}
+
+/* STATS ROW */
+.stats{display:flex;gap:12px;margin-bottom:22px;flex-wrap:wrap;}
+.stat{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 18px;flex:1;min-width:100px;box-shadow:var(--shadow);position:relative;overflow:hidden;}
+.stat::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--accent3);}
+.stat .num{font-family:'Playfair Display',serif;font-size:1.7rem;color:var(--accent);}
+.stat .lbl{font-size:0.67rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;margin-top:2px;}
+
+/* DEPT FILTERS ROW */
+.dept-filter-row{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:10px;padding:10px 14px;background:var(--surface);border:1px solid var(--border);border-radius:10px;box-shadow:var(--shadow);}
+.dept-filter-row label{font-size:0.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.07em;font-weight:600;display:flex;align-items:center;margin-right:4px;}
+
+/* TOOLBAR */
+.toolbar{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;align-items:center;}
+.filter-btn{background:var(--surface);border:1px solid var(--border);color:var(--muted);padding:5px 12px;border-radius:20px;font-family:'Karla',sans-serif;font-size:0.77rem;cursor:pointer;transition:all 0.15s;white-space:nowrap;}
+.filter-btn:hover,.filter-btn.active{background:var(--accent);border-color:var(--accent);color:#fff;}
+.search-inp{background:var(--surface);border:1px solid var(--border);color:var(--text);padding:6px 13px;border-radius:20px;font-family:'Karla',sans-serif;font-size:0.8rem;outline:none;width:200px;transition:border-color 0.2s;}
+.search-inp:focus{border-color:var(--accent2);}
+.btn-primary{background:var(--accent);color:#fff;border:none;padding:7px 15px;border-radius:8px;font-family:'Karla',sans-serif;font-weight:600;font-size:0.82rem;cursor:pointer;transition:background 0.2s;white-space:nowrap;}
+.btn-primary:hover{background:var(--accent2);}
+.btn-primary:disabled{opacity:0.6;cursor:not-allowed;}
+
+/* TABLE */
+.table-wrap{background:var(--surface);border:1px solid var(--border);border-radius:12px;box-shadow:var(--shadow);overflow:auto;}
+.inv-table{width:100%;border-collapse:collapse;min-width:750px;}
+.inv-table th{text-align:left;font-size:0.67rem;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);padding:10px 12px;border-bottom:2px solid var(--border);background:var(--card);white-space:nowrap;}
+.inv-table td{padding:9px 12px;border-bottom:1px solid var(--border);font-size:0.82rem;vertical-align:middle;}
+.inv-table tr:last-child td{border-bottom:none;}
+.inv-table tbody tr:hover td{background:var(--light);}
+.fname{font-weight:500;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.badge{font-size:0.67rem;padding:2px 8px;border-radius:20px;font-weight:600;letter-spacing:0.02em;white-space:nowrap;display:inline-block;margin:1px;}
+.b-po{background:#e8f0fe;color:#1a5cb8;}
+.b-needprocess{background:var(--orange-bg);color:var(--orange);}
+.b-approved{background:var(--green-bg);color:var(--green);}
+.b-pononeed{background:var(--purple-bg);color:var(--purple);}
+.b-signed{background:var(--green-bg);color:var(--green);}
+.b-unsigned{background:var(--orange-bg);color:var(--orange);}
+.b-dept{background:var(--light);color:var(--accent);margin:1px;}
+.status-sel{background:var(--bg);border:1px solid var(--border);color:var(--text);padding:3px 6px;border-radius:6px;font-family:'Karla',sans-serif;font-size:0.75rem;outline:none;cursor:pointer;}
+.btn-sm{background:none;border:1px solid var(--border);color:var(--muted);padding:3px 8px;border-radius:6px;font-family:'Karla',sans-serif;font-size:0.72rem;cursor:pointer;transition:all 0.15s;white-space:nowrap;margin-right:2px;}
+.btn-sm:hover{border-color:var(--accent);color:var(--accent);}
+.btn-sm.danger:hover{border-color:var(--red);color:var(--red);}
+.btn-sign-now{background:var(--accent);color:#fff;border:none;padding:3px 9px;border-radius:6px;font-family:'Karla',sans-serif;font-size:0.72rem;cursor:pointer;margin-right:2px;}
+.btn-sign-now:hover{background:var(--accent2);}
+.empty-row td{text-align:center;padding:36px;color:var(--muted);}
+
+/* MODAL */
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:200;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(3px);}
+.overlay.open{display:flex;}
+.modal{background:var(--surface);border-radius:16px;padding:24px;width:100%;max-width:560px;max-height:92vh;overflow-y:auto;box-shadow:var(--shadow-lg);}
+.modal-wide{max-width:900px;}
+.modal h2{font-family:'Playfair Display',serif;font-size:1.15rem;color:var(--accent);margin-bottom:16px;}
+.fg{margin-bottom:12px;}
+.fg label{display:block;font-size:0.71rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:4px;font-weight:600;}
+.fg input[type=text],.fg input[type=date],.fg input[type=password],.fg select{width:100%;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:8px 11px;border-radius:8px;font-family:'Karla',sans-serif;font-size:0.86rem;outline:none;transition:border-color 0.2s;color-scheme:light;}
+.fg input:focus,.fg select:focus{border-color:var(--accent2);}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+
+/* MULTI-SELECT DEPT */
+.dept-chips{display:flex;flex-wrap:wrap;gap:6px;padding:8px;background:var(--bg);border:1px solid var(--border);border-radius:8px;min-height:42px;cursor:text;}
+.dept-chips.focused{border-color:var(--accent2);}
+.chip{background:var(--accent);color:#fff;padding:3px 8px;border-radius:12px;font-size:0.76rem;display:flex;align-items:center;gap:5px;}
+.chip-x{cursor:pointer;font-size:0.8rem;opacity:0.7;transition:opacity 0.15s;}
+.chip-x:hover{opacity:1;}
+.dept-type-inp{border:none;outline:none;background:transparent;font-family:'Karla',sans-serif;font-size:0.86rem;color:var(--text);min-width:120px;flex:1;padding:2px 4px;}
+.dept-dropdown{background:var(--surface);border:1px solid var(--border);border-radius:8px;box-shadow:var(--shadow-lg);position:absolute;z-index:500;max-height:200px;overflow-y:auto;width:100%;}
+.dept-option{padding:8px 12px;font-size:0.84rem;cursor:pointer;transition:background 0.1s;}
+.dept-option:hover{background:var(--light);}
+.dept-option.selected{color:var(--muted);text-decoration:line-through;}
+.dept-wrap{position:relative;}
+
+/* ACCOUNT / REF AUTOCOMPLETE */
+.ac-wrap{position:relative;}
+.ac-dropdown{background:var(--surface);border:1px solid var(--border);border-radius:8px;box-shadow:var(--shadow-lg);position:absolute;z-index:500;max-height:180px;overflow-y:auto;width:100%;display:none;}
+.ac-dropdown.open{display:block;}
+.ac-option{padding:7px 12px;font-size:0.82rem;cursor:pointer;transition:background 0.1s;}
+.ac-option:hover{background:var(--light);}
+.ac-hint{font-size:0.72rem;color:var(--muted);margin-top:3px;}
+
+/* FILE UPLOAD */
+.upload-zone{border:2px dashed var(--border);border-radius:10px;padding:20px;text-align:center;cursor:pointer;transition:all 0.2s;background:var(--bg);}
+.upload-zone:hover,.upload-zone.over{border-color:var(--accent2);background:#f0f7f4;}
+.uz-icon{font-size:1.6rem;margin-bottom:4px;}
+.uz-text{font-size:0.79rem;color:var(--muted);}
+.file-list{margin-top:8px;display:flex;flex-direction:column;gap:4px;}
+.file-chip{background:var(--light);border:1px solid var(--border);border-radius:6px;padding:4px 10px;font-size:0.78rem;display:flex;align-items:center;gap:6px;}
+.file-chip span{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.file-chip button{background:none;border:none;cursor:pointer;color:var(--muted);font-size:0.82rem;padding:0 2px;}
+.file-chip button:hover{color:var(--red);}
+
+.modal-btns{display:flex;gap:10px;margin-top:16px;}
+.modal-cancel{flex:1;padding:9px;border-radius:8px;border:1px solid var(--border);background:none;color:var(--muted);font-family:'Karla',sans-serif;font-size:0.86rem;cursor:pointer;}
+.modal-cancel:hover{border-color:var(--text);color:var(--text);}
+.modal-submit{flex:2;padding:9px;border-radius:8px;border:none;background:var(--accent);color:#fff;font-family:'Karla',sans-serif;font-weight:600;font-size:0.86rem;cursor:pointer;}
+.modal-submit:hover{background:var(--accent2);}
+.modal-submit:disabled{opacity:0.6;cursor:not-allowed;}
+.ferr{font-size:0.72rem;color:var(--red);margin-top:3px;display:none;}
+.ferr.show{display:block;}
+.fopt{font-size:0.72rem;color:var(--muted);margin-top:3px;}
+
+/* SIGN MODAL */
+.sign-layout{display:flex;gap:16px;flex-wrap:wrap;}
+.sign-pdf{flex:2;min-width:260px;}
+.sign-pdf iframe{width:100%;height:480px;border:1px solid var(--border);border-radius:8px;}
+.sign-form{flex:1;min-width:220px;}
+.sig-wrap{border:2px solid var(--border);border-radius:8px;background:#fff;margin-bottom:7px;}
+canvas{display:block;width:100%;touch-action:none;cursor:crosshair;}
+.canvas-hint{font-size:0.67rem;color:var(--muted);text-align:center;padding:4px;border-top:1px solid var(--border);}
+.btn-clear{background:none;border:1px solid var(--border);color:var(--muted);padding:4px 10px;border-radius:6px;font-family:'Karla',sans-serif;font-size:0.75rem;cursor:pointer;margin-bottom:10px;display:block;transition:all 0.15s;}
+.btn-clear:hover{border-color:var(--red);color:var(--red);}
+.already-signed{background:var(--green-bg);border:1px solid #b8e8cc;border-radius:10px;padding:16px;text-align:center;}
+.already-signed .chk{font-size:1.7rem;margin-bottom:6px;}
+.already-signed h3{font-family:'Playfair Display',serif;color:var(--green);margin-bottom:3px;}
+.already-signed p{font-size:0.8rem;color:var(--muted);}
+.sig-sm{max-width:100%;height:30px;object-fit:contain;margin-top:5px;border-radius:4px;background:#fff;border:1px solid var(--border);padding:2px;}
+
+/* META EDIT */
+.meta-section{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:12px;margin-top:12px;}
+.meta-section h4{font-size:0.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:10px;font-weight:600;}
+
+/* MANAGE TABLES */
+.manage-table-wrap{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;box-shadow:var(--shadow);margin-top:14px;}
+.manage-table{width:100%;border-collapse:collapse;}
+.manage-table th{text-align:left;font-size:0.68rem;text-transform:uppercase;letter-spacing:0.07em;color:var(--muted);padding:10px 14px;border-bottom:2px solid var(--border);background:var(--card);}
+.manage-table td{padding:9px 14px;border-bottom:1px solid var(--border);font-size:0.84rem;vertical-align:middle;}
+.manage-table tr:last-child td{border-bottom:none;}
+.manage-table tbody tr:hover td{background:var(--light);}
+.add-row{display:flex;gap:10px;margin-top:14px;align-items:flex-start;flex-wrap:wrap;}
+.add-inp{flex:1;min-width:120px;background:var(--surface);border:1px solid var(--border);color:var(--text);padding:8px 12px;border-radius:8px;font-family:'Karla',sans-serif;font-size:0.85rem;outline:none;transition:border-color 0.2s;}
+.add-inp:focus{border-color:var(--accent2);}
+
+/* SETTINGS */
+.chpw-box{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:22px;max-width:380px;margin-top:16px;box-shadow:var(--shadow);}
+.chpw-box h3{font-family:'Playfair Display',serif;color:var(--accent);margin-bottom:14px;}
+.section-title{font-family:'Playfair Display',serif;font-size:1.15rem;color:var(--accent);margin-bottom:4px;}
+.section-sub{font-size:0.82rem;color:var(--muted);margin-bottom:2px;}
+
+/* TOAST */
+.toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(80px);padding:10px 20px;border-radius:10px;font-size:0.83rem;font-family:'Karla',sans-serif;z-index:999;transition:transform 0.3s,opacity 0.3s;opacity:0;pointer-events:none;max-width:92vw;text-align:center;}
+.toast.error{background:var(--red-bg);border:1px solid #e8b0a8;color:var(--red);}
+.toast.success{background:var(--green-bg);border:1px solid #b8e8cc;color:var(--green);}
+.toast.warn{background:var(--orange-bg);border:1px solid #f0c88a;color:var(--orange);}
+.toast.show{transform:translateX(-50%) translateY(0);opacity:1;}
+.spinner{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,0.3);border-top-color:#fff;border-radius:50%;animation:spin 0.7s linear infinite;vertical-align:middle;margin-right:5px;}
+@keyframes spin{to{transform:rotate(360deg);}}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-page" class="active">
+  <div class="login-box">
+    <div class="login-logo">
+      <h1>&#128196; Invoice <span style="color:var(--accent3)">Library</span></h1>
+      <p>Sign in to access your invoices</p>
+    </div>
+    <input type="text"     class="login-inp" id="l-user" placeholder="Username" onkeydown="if(event.key==='Enter')doLogin()">
+    <input type="password" class="login-inp" id="l-pass" placeholder="Password" onkeydown="if(event.key==='Enter')doLogin()">
+    <button class="login-btn" id="login-btn" onclick="doLogin()">Sign In</button>
+    <div class="login-err" id="login-err"></div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <div class="topbar">
+    <h1>&#128196; Invoice <span>Library</span></h1>
+    <div class="topbar-nav" id="topbar-nav"></div>
+    <div class="topbar-right">
+      <span class="user-badge" id="user-badge"></span>
+      <button class="logout-btn" onclick="doLogout()">Sign Out</button>
+    </div>
+  </div>
+
+  <!-- INVOICES PAGE -->
+  <div class="content page active" id="page-invoices">
+    <div class="stats" id="stats-row"></div>
+    <div id="dept-filter-wrap"></div>
+    <div class="toolbar" id="toolbar-row"></div>
+    <div class="table-wrap">
+      <table class="inv-table">
+        <thead id="inv-thead"></thead>
+        <tbody id="inv-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- VENDORS PAGE -->
+  <div class="content page" id="page-vendors">
+    <div class="section-title">Vendor Management</div>
+    <div class="section-sub">Add or remove vendors. Only active vendors appear when uploading.</div>
+    <div class="add-row">
+      <input type="text" class="add-inp" id="new-vendor-inp" placeholder="Vendor name..." onkeydown="if(event.key==='Enter')addVendor()">
+      <button class="btn-primary" onclick="addVendor()">+ Add Vendor</button>
+    </div>
+    <div class="manage-table-wrap">
+      <table class="manage-table">
+        <thead><tr><th>Vendor Name</th><th>Status</th><th>Actions</th></tr></thead>
+        <tbody id="vendor-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ACCOUNTS PAGE -->
+  <div class="content page" id="page-accounts">
+    <div class="section-title">Account Management</div>
+    <div class="section-sub">Add or remove accounts (Account Number + Description).</div>
+    <div class="add-row">
+      <input type="text" class="add-inp" id="new-acct-num" placeholder="Account Number (e.g. 5001)" style="max-width:180px;">
+      <input type="text" class="add-inp" id="new-acct-desc" placeholder="Description (e.g. Office Supplies)" onkeydown="if(event.key==='Enter')addAccount()">
+      <button class="btn-primary" onclick="addAccount()">+ Add Account</button>
+    </div>
+    <div class="manage-table-wrap">
+      <table class="manage-table">
+        <thead><tr><th>Account Number</th><th>Description</th><th>Actions</th></tr></thead>
+        <tbody id="acct-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- REF CODES PAGE -->
+  <div class="content page" id="page-refcodes">
+    <div class="section-title">Ref Code Management</div>
+    <div class="section-sub">Add or remove reference codes (Code + Description).</div>
+    <div class="add-row">
+      <input type="text" class="add-inp" id="new-ref-code" placeholder="Ref Code (e.g. REF-01)" style="max-width:180px;">
+      <input type="text" class="add-inp" id="new-ref-desc" placeholder="Description (e.g. Standard PO)" onkeydown="if(event.key==='Enter')addRefCode()">
+      <button class="btn-primary" onclick="addRefCode()">+ Add Ref Code</button>
+    </div>
+    <div class="manage-table-wrap">
+      <table class="manage-table">
+        <thead><tr><th>Ref Code</th><th>Description</th><th>Actions</th></tr></thead>
+        <tbody id="ref-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- SETTINGS PAGE -->
+  <div class="content page" id="page-settings">
+    <div class="section-title">Settings</div>
+    <div class="chpw-box">
+      <h3>Change Password</h3>
+      <div class="fg"><label>New Password</label><input type="password" id="new-pw" placeholder="At least 6 characters"></div>
+      <div class="fg"><label>Confirm Password</label><input type="password" id="confirm-pw" placeholder="Confirm new password"></div>
+      <div class="ferr" id="pw-err"></div>
+      <button class="btn-primary" onclick="changePassword()" style="margin-top:8px;">Update Password</button>
+    </div>
+  </div>
+</div>
+
+<!-- UPLOAD MODAL -->
+<div class="overlay" id="upload-modal">
+  <div class="modal">
+    <h2>Upload Invoice(s)</h2>
+    <div class="fg">
+      <label>PDF File(s) <span style="color:var(--muted);font-weight:400;text-transform:none;">(select multiple)</span></label>
+      <div class="upload-zone" id="upload-zone" onclick="document.getElementById('file-inp').click()" ondragover="onDragOver(event)" ondrop="onDrop(event)">
+        <div class="uz-icon">&#128206;</div>
+        <div class="uz-text">Click to browse or drag and drop — multiple PDFs allowed</div>
+      </div>
+      <input type="file" id="file-inp" accept=".pdf" multiple style="display:none" onchange="onFileSelect(this)">
+      <div class="file-list" id="file-list"></div>
+      <div class="ferr" id="eu-file"></div>
+    </div>
+    <div class="fg">
+      <label>Vendor</label>
+      <select id="u-vendor"><option value="">-- Select vendor --</option></select>
+      <div class="ferr" id="eu-vendor"></div>
+    </div>
+    <div class="fg dept-wrap" id="dept-wrap">
+      <label>Department(s) <span style="color:var(--muted);font-weight:400;text-transform:none;">(type or click to add)</span></label>
+      <div class="dept-chips" id="dept-chips" onclick="focusDeptInput()"></div>
+      <div class="dept-dropdown" id="dept-dropdown"></div>
+      <div class="ferr" id="eu-dept"></div>
+    </div>
+    <div class="fg">
+      <label>Invoice Date</label>
+      <input type="date" id="u-date">
+      <div class="ferr" id="eu-date"></div>
+    </div>
+    <div class="fg">
+      <label>Account <span style="color:var(--muted);font-weight:400;text-transform:none;">(optional — can add later)</span></label>
+      <div class="ac-wrap">
+        <input type="text" id="u-acct" placeholder="Type account number or description..." autocomplete="off" oninput="showAcDropdown('u-acct','u-acct-desc','acct-dd',accounts,'number','description')" onfocus="showAcDropdown('u-acct','u-acct-desc','acct-dd',accounts,'number','description')">
+        <div class="ac-dropdown" id="acct-dd"></div>
+      </div>
+      <input type="text" id="u-acct-desc" placeholder="Account description (auto-fills)" style="margin-top:5px;width:100%;background:var(--bg);border:1px solid var(--border);color:var(--muted);padding:7px 11px;border-radius:8px;font-family:'Karla',sans-serif;font-size:0.84rem;outline:none;" readonly>
+      <div class="fopt">Optional — leave blank to fill in later</div>
+    </div>
+    <div class="fg">
+      <label>Ref Code <span style="color:var(--muted);font-weight:400;text-transform:none;">(optional — can add later)</span></label>
+      <div class="ac-wrap">
+        <input type="text" id="u-ref" placeholder="Type ref code or description..." autocomplete="off" oninput="showAcDropdown('u-ref','u-ref-desc','ref-dd',refcodes,'code','description')" onfocus="showAcDropdown('u-ref','u-ref-desc','ref-dd',refcodes,'code','description')">
+        <div class="ac-dropdown" id="ref-dd"></div>
+      </div>
+      <input type="text" id="u-ref-desc" placeholder="Ref code description (auto-fills)" style="margin-top:5px;width:100%;background:var(--bg);border:1px solid var(--border);color:var(--muted);padding:7px 11px;border-radius:8px;font-family:'Karla',sans-serif;font-size:0.84rem;outline:none;" readonly>
+      <div class="fopt">Optional — leave blank to fill in later</div>
+    </div>
+    <div class="modal-btns">
+      <button class="modal-cancel" onclick="closeModal('upload-modal')">Cancel</button>
+      <button class="modal-submit" id="upload-btn" onclick="submitUpload()">Upload Invoice(s)</button>
+    </div>
+  </div>
+</div>
+
+<!-- SIGN / VIEW MODAL -->
+<div class="overlay" id="sign-modal">
+  <div class="modal modal-wide">
+    <h2 id="sign-title">Invoice</h2>
+    <div class="sign-layout">
+      <div class="sign-pdf"><iframe id="sign-frame" src="about:blank"></iframe></div>
+      <div class="sign-form">
+        <div id="sign-form-inner">
+          <div class="fg"><label>Your Full Name</label><input type="text" id="signer-name" placeholder="Full name"><div class="ferr" id="e-signer"></div></div>
+          <div style="font-size:0.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.07em;font-weight:600;margin-bottom:6px;">Draw Signature</div>
+          <div class="sig-wrap"><canvas id="sig-canvas" width="260" height="110"></canvas><div class="canvas-hint">Sign with mouse or finger</div></div>
+          <div class="ferr" id="e-sig"></div>
+          <button class="btn-clear" onclick="clearSig()">Clear Signature</button>
+          <button class="btn-primary" id="submit-sig-btn" onclick="submitSignature()" style="width:100%;">Submit Sign-Off</button>
+        </div>
+        <div id="already-signed-box" style="display:none">
+          <div class="already-signed">
+            <div class="chk">&#10003;</div>
+            <h3>Signed</h3>
+            <p id="as-name"></p>
+            <p id="as-date" style="margin-top:3px;"></p>
+            <img id="as-sig" class="sig-sm" src="" alt="sig" style="display:none">
+          </div>
+        </div>
+        <!-- META EDIT for admin/accounting -->
+        <div id="meta-edit-section" style="display:none">
+          <div class="meta-section">
+            <h4>Account &amp; Ref Code</h4>
+            <div class="fg">
+              <label>Account</label>
+              <div class="ac-wrap">
+                <input type="text" id="m-acct" placeholder="Account number..." autocomplete="off" oninput="showAcDropdown('m-acct','m-acct-desc','m-acct-dd',accounts,'number','description')" onfocus="showAcDropdown('m-acct','m-acct-desc','m-acct-dd',accounts,'number','description')">
+                <div class="ac-dropdown" id="m-acct-dd"></div>
+              </div>
+              <input type="text" id="m-acct-desc" placeholder="Description (auto-fills)" style="margin-top:4px;width:100%;background:var(--bg);border:1px solid var(--border);color:var(--muted);padding:6px 10px;border-radius:7px;font-family:'Karla',sans-serif;font-size:0.82rem;outline:none;" readonly>
+            </div>
+            <div class="fg">
+              <label>Ref Code</label>
+              <div class="ac-wrap">
+                <input type="text" id="m-ref" placeholder="Ref code..." autocomplete="off" oninput="showAcDropdown('m-ref','m-ref-desc','m-ref-dd',refcodes,'code','description')" onfocus="showAcDropdown('m-ref','m-ref-desc','m-ref-dd',refcodes,'code','description')">
+                <div class="ac-dropdown" id="m-ref-dd"></div>
+              </div>
+              <input type="text" id="m-ref-desc" placeholder="Description (auto-fills)" style="margin-top:4px;width:100%;background:var(--bg);border:1px solid var(--border);color:var(--muted);padding:6px 10px;border-radius:7px;font-family:'Karla',sans-serif;font-size:0.82rem;outline:none;" readonly>
+            </div>
+            <button class="btn-primary" onclick="saveMeta()" style="width:100%;margin-top:4px;">Save Account &amp; Ref Code</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-btns" style="margin-top:14px;"><button class="modal-cancel" onclick="closeModal('sign-modal')">Close</button></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+var SHEET_URL = 'https://script.google.com/macros/s/AKfycbxJON480CeQ_EcpChLdioRcAK5t89wKNutXzocGmiE2B5wSWxGOOOnnRUEIrnsa4z4mmQ/exec';
+var DEPTS = ['Safety','Accounting','Controlling','Quality Management','Production','Marketing','Sales','Procurement','Logistics','IT','Maintenance & Engineering','Finance & Taxes','Supply Chain'];
+var STATUSES = ['PO','Need Processed','Approved','PO Don\'t Need Sign'];
+
+var session   = JSON.parse(sessionStorage.getItem('invSess2') || 'null');
+var invoices  = [];
+var vendors   = [];
+var accounts  = [];
+var refcodes  = [];
+var selFiles  = []; // [{name, base64}]
+var selectedDepts = [];
+var curFilter = 'all';
+var curDeptFilter = 'all';
+var curSignId = null;
+var sigCanvas, sigCtx, sigDrawing = false;
+var toastTmr  = null;
+
+// ── HELPERS ───────────────────────────────────────────────────────────────────
+function toast(msg, type) {
+  var t = document.getElementById('toast');
+  t.textContent = msg; t.className = 'toast '+(type||'error')+' show';
+  clearTimeout(toastTmr);
+  toastTmr = setTimeout(function(){ t.classList.remove('show'); }, 3800);
+}
+function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function showErr(id,msg){ var e=document.getElementById(id); if(e){e.textContent='! '+msg;e.classList.add('show');} }
+function clearErr(id){ var e=document.getElementById(id); if(e){e.textContent='';e.classList.remove('show');} }
+function todayStr(){ return new Date().toISOString().split('T')[0]; }
+function canAll(){ return session.role==='admin'||session.role==='accounting'; }
+function isAdmin(){ return session.role==='admin'; }
+function isAcct(){ return session.role==='admin'||session.role==='accounting'; }
+function myDepts(){ return session.departments==='ALL' ? DEPTS : session.departments.split(',').map(function(d){ return d.trim(); }); }
+
+// ── LOGIN ─────────────────────────────────────────────────────────────────────
+function doLogin() {
+  var user=document.getElementById('l-user').value.trim();
+  var pass=document.getElementById('l-pass').value.trim();
+  var btn=document.getElementById('login-btn');
+  var err=document.getElementById('login-err');
+  err.textContent='';
+  if(!user||!pass){ err.textContent='Please enter username and password.'; return; }
+  btn.disabled=true; btn.innerHTML='<span class="spinner"></span>Signing in...';
+  fetch(SHEET_URL+'?action=login&username='+encodeURIComponent(user)+'&password='+encodeURIComponent(pass))
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      btn.disabled=false; btn.textContent='Sign In';
+      if(d.status==='ok'){
+        session={username:d.username,role:d.role,departments:d.departments};
+        sessionStorage.setItem('invSess2',JSON.stringify(session));
+        startApp();
+      } else { err.textContent=d.message||'Invalid credentials.'; }
+    })
+    .catch(function(){ btn.disabled=false; btn.textContent='Sign In'; err.textContent='Connection error. Try again.'; });
+}
+function doLogout(){
+  session=null; sessionStorage.removeItem('invSess2');
+  document.getElementById('app').style.display='none';
+  document.getElementById('login-page').classList.add('active');
+  document.getElementById('l-user').value='';
+  document.getElementById('l-pass').value='';
+}
+
+// ── APP START ─────────────────────────────────────────────────────────────────
+function startApp(){
+  document.getElementById('login-page').classList.remove('active');
+  document.getElementById('app').style.display='flex';
+  var deptDisplay = session.departments==='ALL' ? session.role : session.departments;
+  document.getElementById('user-badge').textContent=session.username+' | '+deptDisplay;
+  buildNav(); initCanvas(); loadData();
+}
+
+function buildNav(){
+  var nav=document.getElementById('topbar-nav'); nav.innerHTML='';
+  var pages=[['page-invoices','Invoices']];
+  if(isAcct()){
+    pages.push(['page-vendors','Vendors']);
+    pages.push(['page-accounts','Accounts']);
+    pages.push(['page-refcodes','Ref Codes']);
+  }
+  pages.push(['page-settings','Settings']);
+  pages.forEach(function(p,i){
+    var b=document.createElement('button');
+    b.className='nav-btn'+(i===0?' active':'');
+    b.textContent=p[1]; b.dataset.page=p[0];
+    b.onclick=function(){ showPage(p[0]); };
+    nav.appendChild(b);
+  });
+}
+
+function showPage(id){
+  document.querySelectorAll('.content.page').forEach(function(p){ p.classList.remove('active'); });
+  document.getElementById(id).classList.add('active');
+  document.querySelectorAll('.nav-btn').forEach(function(b){ b.classList.toggle('active',b.dataset.page===id); });
+  if(id==='page-vendors') renderVendors();
+  if(id==='page-accounts') renderAccounts();
+  if(id==='page-refcodes') renderRefCodes();
+}
+
+// ── LOAD ──────────────────────────────────────────────────────────────────────
+function loadData(){
+  fetch(SHEET_URL+'?action=getAll')
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      invoices=d.invoices||[]; vendors=d.vendors||[];
+      accounts=d.accounts||[]; refcodes=d.refcodes||[];
+      renderInvoices();
+    })
+    .catch(function(){ toast('Could not load data.','error'); });
+}
+
+// ── RENDER INVOICES ───────────────────────────────────────────────────────────
+function renderInvoices(){
+  var search=document.getElementById('search-inp')?document.getElementById('search-inp').value.toLowerCase():'';
+  var depts=myDepts();
+
+  var visible=invoices.filter(function(inv){
+    // Role filter
+    if(!canAll()){
+      var invDepts=(inv.departments||'').split(',').map(function(d){ return d.trim(); });
+      var overlap=invDepts.filter(function(d){ return depts.indexOf(d)>-1; });
+      if(overlap.length===0) return false;
+    }
+    // Dept filter
+    if(curDeptFilter!=='all'){
+      var invDepts2=(inv.departments||'').split(',').map(function(d){ return d.trim(); });
+      if(invDepts2.indexOf(curDeptFilter)===-1) return false;
+    }
+    // Status filter
+    if(curFilter==='all') {}
+    else if(curFilter==='signed')    { if(inv.signed!=='Yes') return false; }
+    else if(curFilter==='unsigned')  { if(inv.signed==='Yes') return false; }
+    else if(curFilter==='po')        { if(inv.status!=='PO') return false; }
+    else if(curFilter==='needprocess'){ if(inv.status!=='Need Processed') return false; }
+    else if(curFilter==='approved')  { if(inv.status!=='Approved') return false; }
+    else if(curFilter==='pononeed')  { if(inv.status!=="PO Don't Need Sign") return false; }
+    // Search
+    if(search){
+      return (inv.fileNames||'').toLowerCase().includes(search)||
+             (inv.vendor||'').toLowerCase().includes(search)||
+             (inv.departments||'').toLowerCase().includes(search)||
+             (inv.account||'').toLowerCase().includes(search)||
+             (inv.refCode||'').toLowerCase().includes(search);
+    }
+    return true;
+  });
+
+  // Stats
+  var myInvs=canAll()?invoices:invoices.filter(function(inv){
+    var invDepts=(inv.departments||'').split(',').map(function(d){ return d.trim(); });
+    return invDepts.filter(function(d){ return depts.indexOf(d)>-1; }).length>0;
+  });
+  document.getElementById('stats-row').innerHTML=
+    '<div class="stat"><div class="num">'+myInvs.length+'</div><div class="lbl">Total</div></div>'+
+    '<div class="stat"><div class="num">'+myInvs.filter(function(i){ return i.signed==='Yes'; }).length+'</div><div class="lbl">Signed</div></div>'+
+    '<div class="stat"><div class="num">'+myInvs.filter(function(i){ return i.signed!=='Yes'; }).length+'</div><div class="lbl">Unsigned</div></div>'+
+    (isAcct()?
+      '<div class="stat"><div class="num">'+myInvs.filter(function(i){ return i.status==='Approved'; }).length+'</div><div class="lbl">Approved</div></div>'+
+      '<div class="stat"><div class="num">'+myInvs.filter(function(i){ return i.status==='PO'; }).length+'</div><div class="lbl">PO</div></div>'+
+      '<div class="stat"><div class="num">'+myInvs.filter(function(i){ return i.status==='Need Processed'; }).length+'</div><div class="lbl">Need Processed</div></div>'
+    :'');
+
+  // Dept filter row (only admin/accounting)
+  var dfw=document.getElementById('dept-filter-wrap');
+  if(canAll()){
+    var dfHtml='<div class="dept-filter-row"><label>Filter by Dept:</label>'+
+      '<button class="filter-btn'+(curDeptFilter==='all'?' active':'')+'" onclick="setDeptFilter(\'all\',this)">All</button>';
+    DEPTS.forEach(function(d){
+      dfHtml+='<button class="filter-btn'+(curDeptFilter===d?' active':'')+'" onclick="setDeptFilter(\''+esc(d)+'\',this)">'+esc(d)+'</button>';
+    });
+    dfHtml+='</div>';
+    dfw.innerHTML=dfHtml;
+  } else { dfw.innerHTML=''; }
+
+  // Toolbar
+  buildToolbar();
+
+  // Table
+  document.getElementById('inv-thead').innerHTML='<tr>'+
+    '<th>Invoice Name</th><th>Vendor</th><th>Department(s)</th><th>Date</th>'+
+    '<th>Account</th><th>Ref Code</th>'+
+    (isAcct()?'<th>Status</th>':'')+'<th>Signed</th><th>Actions</th></tr>';
+
+  var tbody=document.getElementById('inv-tbody');
+  tbody.innerHTML='';
+  if(visible.length===0){ tbody.innerHTML='<tr class="empty-row"><td colspan="10">No invoices found.</td></tr>'; return; }
+
+  visible.slice().reverse().forEach(function(inv){
+    var tr=document.createElement('tr');
+    var deptBadges=(inv.departments||'').split(',').map(function(d){ return '<span class="badge b-dept">'+esc(d.trim())+'</span>'; }).join('');
+    var statusTd='';
+    if(isAcct()){
+      statusTd='<td><select class="status-sel" onchange="updateStatus(\''+inv.id+'\',this.value)">'+
+        STATUSES.map(function(s){ return '<option value="'+esc(s)+'"'+(inv.status===s?' selected':'')+'>'+esc(s)+'</option>'; }).join('')+
+        '</select></td>';
+    }
+    var signBadge=inv.signed==='Yes'?'<span class="badge b-signed">Signed</span>':'<span class="badge b-unsigned">Pending</span>';
+    var actions='<button class="btn-sm" onclick="viewInvoice(\''+inv.id+'\')">View</button>';
+    if(session.role==='manager'&&inv.signed!=='Yes') actions+='<button class="btn-sign-now" onclick="openSignModal(\''+inv.id+'\',false)">Sign</button>';
+    if(isAdmin()) actions+='<button class="btn-sm danger" onclick="delInvoice(\''+inv.id+'\')">Del</button>';
+    tr.innerHTML=
+      '<td class="fname" title="'+esc(inv.fileNames)+'">'+esc(inv.fileNames)+'</td>'+
+      '<td>'+esc(inv.vendor)+'</td>'+
+      '<td>'+deptBadges+'</td>'+
+      '<td>'+esc(inv.date)+'</td>'+
+      '<td>'+(inv.account?'<span class="badge" style="background:var(--blue-bg);color:var(--blue)">'+esc(inv.account)+'</span>':'<span style="color:var(--muted);font-size:0.75rem">—</span>')+'</td>'+
+      '<td>'+(inv.refCode?'<span class="badge" style="background:var(--purple-bg);color:var(--purple)">'+esc(inv.refCode)+'</span>':'<span style="color:var(--muted);font-size:0.75rem">—</span>')+'</td>'+
+      statusTd+
+      '<td>'+signBadge+'</td>'+
+      '<td>'+actions+'</td>';
+    tbody.appendChild(tr);
+  });
+}
+
+function buildToolbar(){
+  var canUpload=isAcct();
+  var html=
+    '<button class="filter-btn'+(curFilter==='all'?' active':'')+'" onclick="setCurFilter(\'all\',this)">All</button>'+
+    '<button class="filter-btn'+(curFilter==='unsigned'?' active':'')+'" onclick="setCurFilter(\'unsigned\',this)">Unsigned</button>'+
+    '<button class="filter-btn'+(curFilter==='signed'?' active':'')+'" onclick="setCurFilter(\'signed\',this)">Signed</button>';
+  if(isAcct()){
+    html+=
+      '<button class="filter-btn'+(curFilter==='po'?' active':'')+'" onclick="setCurFilter(\'po\',this)">PO</button>'+
+      '<button class="filter-btn'+(curFilter==='needprocess'?' active':'')+'" onclick="setCurFilter(\'needprocess\',this)">Need Processed</button>'+
+      '<button class="filter-btn'+(curFilter==='approved'?' active':'')+'" onclick="setCurFilter(\'approved\',this)">Approved</button>'+
+      '<button class="filter-btn'+(curFilter==='pononeed'?' active':'')+'" onclick="setCurFilter(\'pononeed\',this)">PO Don\'t Need Sign</button>';
+  }
+  html+='<input type="text" class="search-inp" id="search-inp" placeholder="Search invoices..." oninput="renderInvoices()">';
+  if(canUpload) html+='<button class="btn-primary" onclick="openUploadModal()">+ Upload Invoice</button>';
+  document.getElementById('toolbar-row').innerHTML=html;
+}
+
+function setCurFilter(f){ curFilter=f; renderInvoices(); }
+function setDeptFilter(f){ curDeptFilter=f; renderInvoices(); }
+
+// ── UPLOAD ────────────────────────────────────────────────────────────────────
+function openUploadModal(){
+  selFiles=[];
+  selectedDepts=[];
+  document.getElementById('file-list').innerHTML='';
+  document.getElementById('file-inp').value='';
+  document.getElementById('u-date').value=todayStr();
+  document.getElementById('u-acct').value='';
+  document.getElementById('u-acct-desc').value='';
+  document.getElementById('u-ref').value='';
+  document.getElementById('u-ref-desc').value='';
+  ['eu-file','eu-vendor','eu-dept','eu-date'].forEach(clearErr);
+
+  // Fill vendor select
+  var vs=document.getElementById('u-vendor');
+  vs.innerHTML='<option value="">-- Select vendor --</option>';
+  vendors.filter(function(v){ return v.active==='Yes'||v.active===true; }).forEach(function(v){
+    var o=document.createElement('option'); o.value=v.name; o.textContent=v.name; vs.appendChild(o);
+  });
+
+  renderDeptChips();
+  document.getElementById('upload-modal').classList.add('open');
+}
+
+function closeModal(id){
+  document.getElementById(id).classList.remove('open');
+  // close any open dropdowns
+  document.querySelectorAll('.ac-dropdown').forEach(function(d){ d.classList.remove('open'); });
+  document.getElementById('dept-dropdown').style.display='none';
+}
+
+function onFileSelect(inp){
+  var files=inp.files;
+  for(var i=0;i<files.length;i++){
+    var file=files[i];
+    if(file.type!=='application/pdf'){ toast('Only PDF files allowed: '+file.name,'error'); continue; }
+    if(file.size>5*1024*1024){ toast('File too large (max 5MB): '+file.name,'error'); continue; }
+    (function(f){
+      var r=new FileReader();
+      r.onload=function(e){ selFiles.push({name:f.name,base64:e.target.result}); renderFileList(); };
+      r.readAsDataURL(f);
+    })(file);
+  }
+  clearErr('eu-file');
+}
+function onDragOver(e){ e.preventDefault(); document.getElementById('upload-zone').classList.add('over'); }
+function onDrop(e){
+  e.preventDefault(); document.getElementById('upload-zone').classList.remove('over');
+  var files=e.dataTransfer.files;
+  var dt2=new DataTransfer();
+  for(var i=0;i<files.length;i++) dt2.items.add(files[i]);
+  document.getElementById('file-inp').files=dt2.files;
+  onFileSelect(document.getElementById('file-inp'));
+}
+
+function renderFileList(){
+  var fl=document.getElementById('file-list'); fl.innerHTML='';
+  selFiles.forEach(function(f,i){
+    var chip=document.createElement('div'); chip.className='file-chip';
+    chip.innerHTML='<span>'+esc(f.name)+'</span><button onclick="removeFile('+i+')">x</button>';
+    fl.appendChild(chip);
+  });
+}
+function removeFile(i){ selFiles.splice(i,1); renderFileList(); }
+
+// DEPT CHIPS
+function renderDeptChips(){
+  var container=document.getElementById('dept-chips');
+  container.innerHTML='';
+  selectedDepts.forEach(function(d,i){
+    var chip=document.createElement('span'); chip.className='chip';
+    chip.innerHTML=esc(d)+'<span class="chip-x" onclick="removeDept('+i+')">x</span>';
+    container.appendChild(chip);
+  });
+  var inp=document.createElement('input');
+  inp.type='text'; inp.className='dept-type-inp'; inp.id='dept-type-inp';
+  inp.placeholder=selectedDepts.length===0?'Type or click department...':'';
+  inp.oninput=function(){ filterDeptDropdown(this.value); };
+  inp.onfocus=function(){ filterDeptDropdown(this.value); };
+  inp.onkeydown=function(e){ if(e.key==='Backspace'&&!this.value&&selectedDepts.length>0){ removeDept(selectedDepts.length-1); } };
+  container.appendChild(inp);
+  document.addEventListener('click',closeDeptDropdown);
+}
+function focusDeptInput(){ var i=document.getElementById('dept-type-inp'); if(i){ i.focus(); filterDeptDropdown(i.value); } }
+function removeDept(i){ selectedDepts.splice(i,1); renderDeptChips(); }
+function filterDeptDropdown(val){
+  var dd=document.getElementById('dept-dropdown'); dd.innerHTML=''; dd.style.display='block';
+  var lower=val.toLowerCase();
+  var available=DEPTS.filter(function(d){ return d.toLowerCase().includes(lower)&&selectedDepts.indexOf(d)===-1; });
+  if(available.length===0){ dd.style.display='none'; return; }
+  available.forEach(function(d){
+    var opt=document.createElement('div'); opt.className='dept-option';
+    opt.textContent=d;
+    opt.onmousedown=function(e){ e.preventDefault(); selectedDepts.push(d); renderDeptChips(); var dd2=document.getElementById('dept-dropdown'); dd2.style.display='none'; };
+    dd.appendChild(opt);
+  });
+}
+function closeDeptDropdown(e){
+  var wrap=document.getElementById('dept-wrap');
+  if(wrap&&!wrap.contains(e.target)){ var dd=document.getElementById('dept-dropdown'); if(dd) dd.style.display='none'; }
+}
+
+// ACCOUNT / REF AUTOCOMPLETE
+function showAcDropdown(inputId, descId, ddId, data, codeKey, descKey){
+  var val=(document.getElementById(inputId).value||'').toLowerCase();
+  var dd=document.getElementById(ddId); dd.innerHTML='';
+  var filtered=data.filter(function(item){
+    return (String(item[codeKey]||'').toLowerCase().includes(val)||(item[descKey]||'').toLowerCase().includes(val));
+  }).slice(0,10);
+  if(filtered.length===0){ dd.classList.remove('open'); return; }
+  filtered.forEach(function(item){
+    var opt=document.createElement('div'); opt.className='ac-option';
+    opt.textContent=item[codeKey]+' — '+item[descKey];
+    opt.onmousedown=function(e){
+      e.preventDefault();
+      document.getElementById(inputId).value=item[codeKey];
+      document.getElementById(descId).value=item[descKey];
+      dd.classList.remove('open');
+    };
+    dd.appendChild(opt);
+  });
+  dd.classList.add('open');
+  document.addEventListener('click',function handler(e){
+    if(!dd.contains(e.target)&&e.target.id!==inputId){ dd.classList.remove('open'); document.removeEventListener('click',handler); }
+  });
+}
+
+function submitUpload(){
+  var vendor=document.getElementById('u-vendor').value;
+  var date=document.getElementById('u-date').value;
+  var acct=document.getElementById('u-acct').value.trim();
+  var acctDesc=document.getElementById('u-acct-desc').value.trim();
+  var ref=document.getElementById('u-ref').value.trim();
+  var refDesc=document.getElementById('u-ref-desc').value.trim();
+  var valid=true;
+  ['eu-file','eu-vendor','eu-dept','eu-date'].forEach(clearErr);
+  if(selFiles.length===0)      { showErr('eu-file', 'Please select at least one PDF file.'); valid=false; }
+  if(!vendor)                   { showErr('eu-vendor','Please select a vendor.'); valid=false; }
+  if(selectedDepts.length===0) { showErr('eu-dept', 'Please add at least one department.'); valid=false; }
+  if(!date)                    { showErr('eu-date', 'Please pick a date.'); valid=false; }
+  if(date>todayStr())          { showErr('eu-date', 'Date cannot be in the future.'); valid=false; }
+  if(!valid) return;
+
+  var btn=document.getElementById('upload-btn');
+  btn.disabled=true; btn.innerHTML='<span class="spinner"></span>Uploading '+selFiles.length+' file(s)...';
+
+  var deptStr=selectedDepts.join(', ');
+  var invoicesPayload=selFiles.map(function(f){
+    return {
+      id:'inv-'+Date.now()+'-'+Math.random().toString(36).slice(2),
+      fileName:f.name, vendor:vendor, departments:deptStr, date:date,
+      status:'Need Processed', uploadedBy:session.username, uploadDate:todayStr(),
+      pdfData:f.base64, account:acct, accountDesc:acctDesc, refCode:ref, refDesc:refDesc
+    };
+  });
+
+  fetch(SHEET_URL,{ method:'POST', body:JSON.stringify({action:'saveInvoices',invoices:invoicesPayload}), headers:{'Content-Type':'text/plain'} })
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      btn.disabled=false; btn.textContent='Upload Invoice(s)';
+      if(d.status==='ok'){
+        invoicesPayload.forEach(function(inv){
+          if(d.saved.indexOf(inv.fileName)>-1){
+            invoices.push({id:inv.id,fileNames:inv.fileName,vendor:vendor,departments:deptStr,date:date,status:'Need Processed',uploadedBy:session.username,uploadDate:todayStr(),pdfData:inv.pdfData,signed:'No',signedBy:'',signature:'',signDate:'',account:acct,accountDesc:acctDesc,refCode:ref,refDesc:refDesc});
+          }
+        });
+        closeModal('upload-modal'); renderInvoices();
+        var msg='Uploaded '+d.saved.length+' invoice(s)!';
+        if(d.dupes&&d.dupes.length>0) msg+=' ('+d.dupes.length+' duplicate(s) skipped)';
+        toast(msg, d.dupes&&d.dupes.length>0?'warn':'success');
+      } else { toast('Upload failed.','error'); }
+    })
+    .catch(function(){ btn.disabled=false; btn.textContent='Upload Invoice(s)'; toast('Network error.','error'); });
+}
+
+// ── STATUS ────────────────────────────────────────────────────────────────────
+function updateStatus(id,status){
+  fetch(SHEET_URL,{ method:'POST', body:JSON.stringify({action:'updateStatus',id:id,status:status}), headers:{'Content-Type':'text/plain'} })
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      if(d.status==='ok'){ var inv=invoices.filter(function(i){ return i.id===id; })[0]; if(inv) inv.status=status; toast('Status updated to '+status,'success'); renderInvoices(); }
+    })
+    .catch(function(){ toast('Could not update status.','error'); });
+}
+
+// ── VIEW / SIGN ───────────────────────────────────────────────────────────────
+function viewInvoice(id){ openSignModal(id,true); }
+function openSignModal(id,viewOnly){
+  var inv=invoices.filter(function(i){ return i.id===id; })[0]; if(!inv) return;
+  curSignId=id;
+  document.getElementById('sign-title').textContent=inv.fileNames;
+  document.getElementById('sign-frame').src=inv.pdfData||'about:blank';
+
+  // Meta edit section
+  var metaSection=document.getElementById('meta-edit-section');
+  if(isAcct()){
+    metaSection.style.display='block';
+    document.getElementById('m-acct').value=inv.account||'';
+    document.getElementById('m-acct-desc').value=inv.accountDesc||'';
+    document.getElementById('m-ref').value=inv.refCode||'';
+    document.getElementById('m-ref-desc').value=inv.refDesc||'';
+  } else { metaSection.style.display='none'; }
+
+  if(inv.signed==='Yes'||viewOnly){
+    document.getElementById('sign-form-inner').style.display='none';
+    document.getElementById('already-signed-box').style.display='block';
+    document.getElementById('as-name').textContent=inv.signed==='Yes'?'Signed by '+inv.signedBy:'View Only';
+    document.getElementById('as-date').textContent=inv.signDate||'';
+    var si=document.getElementById('as-sig');
+    if(inv.signature){ si.src=inv.signature; si.style.display=''; } else si.style.display='none';
+  } else {
+    document.getElementById('sign-form-inner').style.display='block';
+    document.getElementById('already-signed-box').style.display='none';
+    document.getElementById('signer-name').value='';
+    ['e-signer','e-sig'].forEach(clearErr);
+    clearSig();
+  }
+  document.getElementById('sign-modal').classList.add('open');
+}
+
+function saveMeta(){
+  var acct=document.getElementById('m-acct').value.trim();
+  var acctDesc=document.getElementById('m-acct-desc').value.trim();
+  var ref=document.getElementById('m-ref').value.trim();
+  var refDesc=document.getElementById('m-ref-desc').value.trim();
+  fetch(SHEET_URL,{ method:'POST', body:JSON.stringify({action:'updateInvoiceMeta',id:curSignId,account:acct,accountDesc:acctDesc,refCode:ref,refDesc:refDesc}), headers:{'Content-Type':'text/plain'} })
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      if(d.status==='ok'){
+        var inv=invoices.filter(function(i){ return i.id===curSignId; })[0];
+        if(inv){ inv.account=acct; inv.accountDesc=acctDesc; inv.refCode=ref; inv.refDesc=refDesc; }
+        renderInvoices(); toast('Account & Ref Code saved!','success');
+      }
+    })
+    .catch(function(){ toast('Could not save.','error'); });
+}
+
+// ── SIGNATURE ─────────────────────────────────────────────────────────────────
+function initCanvas(){
+  sigCanvas=document.getElementById('sig-canvas');
+  sigCtx=sigCanvas.getContext('2d');
+  sigCtx.strokeStyle='#1a1a18'; sigCtx.lineWidth=2.2; sigCtx.lineCap='round'; sigCtx.lineJoin='round';
+  function pos(e){ var r=sigCanvas.getBoundingClientRect(),sx=sigCanvas.width/r.width,sy=sigCanvas.height/r.height,src=e.touches?e.touches[0]:e; return {x:(src.clientX-r.left)*sx,y:(src.clientY-r.top)*sy}; }
+  sigCanvas.addEventListener('mousedown',function(e){ sigDrawing=true; var p=pos(e); sigCtx.beginPath(); sigCtx.moveTo(p.x,p.y); });
+  sigCanvas.addEventListener('mousemove',function(e){ if(!sigDrawing)return; var p=pos(e); sigCtx.lineTo(p.x,p.y); sigCtx.stroke(); });
+  sigCanvas.addEventListener('mouseup',function(){ sigDrawing=false; });
+  sigCanvas.addEventListener('mouseleave',function(){ sigDrawing=false; });
+  sigCanvas.addEventListener('touchstart',function(e){ e.preventDefault(); sigDrawing=true; var p=pos(e); sigCtx.beginPath(); sigCtx.moveTo(p.x,p.y); },{passive:false});
+  sigCanvas.addEventListener('touchmove',function(e){ e.preventDefault(); if(!sigDrawing)return; var p=pos(e); sigCtx.lineTo(p.x,p.y); sigCtx.stroke(); },{passive:false});
+  sigCanvas.addEventListener('touchend',function(){ sigDrawing=false; });
+}
+function clearSig(){ if(sigCtx) sigCtx.clearRect(0,0,sigCanvas.width,sigCanvas.height); }
+function sigEmpty(){ if(!sigCanvas)return true; var d=sigCtx.getImageData(0,0,sigCanvas.width,sigCanvas.height).data; for(var i=3;i<d.length;i+=4){if(d[i]>0)return false;} return true; }
+
+function submitSignature(){
+  var name=document.getElementById('signer-name').value.trim();
+  var valid=true;
+  ['e-signer','e-sig'].forEach(clearErr);
+  if(!name){ showErr('e-signer','Please enter your full name.'); valid=false; }
+  if(sigEmpty()){ showErr('e-sig','Please draw your signature.'); valid=false; }
+  if(!valid) return;
+  var sigData=sigCanvas.toDataURL('image/png');
+  var signDate=new Date().toLocaleDateString('en-US')+' '+new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'});
+  var btn=document.getElementById('submit-sig-btn');
+  btn.disabled=true; btn.innerHTML='<span class="spinner"></span>Submitting...';
+  fetch(SHEET_URL,{ method:'POST', body:JSON.stringify({action:'saveSignature',id:curSignId,signedBy:name,signature:sigData,signDate:signDate}), headers:{'Content-Type':'text/plain'} })
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      btn.disabled=false; btn.textContent='Submit Sign-Off';
+      if(d.status==='ok'){
+        var inv=invoices.filter(function(i){ return i.id===curSignId; })[0];
+        if(inv){ inv.signed='Yes'; inv.signedBy=name; inv.signature=sigData; inv.signDate=signDate; }
+        document.getElementById('sign-form-inner').style.display='none';
+        document.getElementById('already-signed-box').style.display='block';
+        document.getElementById('as-name').textContent='Signed by '+name;
+        document.getElementById('as-date').textContent='on '+signDate;
+        var si=document.getElementById('as-sig'); si.src=sigData; si.style.display='';
+        renderInvoices(); toast('Signed successfully!','success');
+      } else { toast('Could not save signature.','error'); }
+    })
+    .catch(function(){ btn.disabled=false; btn.textContent='Submit Sign-Off'; toast('Network error.','error'); });
+}
+
+// ── DELETE ────────────────────────────────────────────────────────────────────
+function delInvoice(id){
+  if(!confirm('Delete this invoice permanently?')) return;
+  fetch(SHEET_URL,{ method:'POST', body:JSON.stringify({action:'deleteInvoice',id:id}), headers:{'Content-Type':'text/plain'} })
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      if(d.status==='ok'){ invoices=invoices.filter(function(i){ return i.id!==id; }); renderInvoices(); toast('Invoice deleted.','warn'); }
+    })
+    .catch(function(){ toast('Could not delete.','error'); });
+}
+
+// ── VENDORS ───────────────────────────────────────────────────────────────────
+function renderVendors(){
+  var tb=document.getElementById('vendor-tbody'); if(!tb) return;
+  tb.innerHTML='';
+  if(vendors.length===0){ tb.innerHTML='<tr><td colspan="3" style="text-align:center;padding:24px;color:var(--muted);">No vendors yet.</td></tr>'; return; }
+  vendors.forEach(function(v){
+    var isActive=v.active==='Yes'||v.active===true;
+    var tr=document.createElement('tr');
+    tr.innerHTML='<td style="font-weight:500">'+esc(v.name)+'</td>'+
+      '<td><span class="badge '+(isActive?'b-signed':'b-unsigned')+'">'+(isActive?'Active':'Inactive')+'</span></td>'+
+      '<td>'+
+        '<button class="btn-sm" onclick="toggleVendor(\''+v.id+'\',\''+(isActive?'No':'Yes')+'\')">'+( isActive?'Disable':'Enable')+'</button>'+
+        '<button class="btn-sm danger" onclick="deleteVendor(\''+v.id+'\')">Delete</button>'+
+      '</td>';
+    tb.appendChild(tr);
+  });
+}
+function addVendor(){
+  var name=document.getElementById('new-vendor-inp').value.trim();
+  if(!name){ toast('Please enter a vendor name.','error'); return; }
+  var id='ven-'+Date.now();
+  fetch(SHEET_URL,{ method:'POST', body:JSON.stringify({action:'saveVendor',id:id,name:name}), headers:{'Content-Type':'text/plain'} })
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      if(d.status==='ok'){ vendors.push({id:id,name:name,active:'Yes'}); document.getElementById('new-vendor-inp').value=''; renderVendors(); toast('Vendor added!','success'); }
+      else if(d.status==='duplicate'){ toast('Vendor already exists.','warn'); }
+      else { toast('Could not add vendor.','error'); }
+    })
+    .catch(function(){ toast('Network error.','error'); });
+}
+function toggleVendor(id,active){
+  fetch(SHEET_URL,{ method:'POST', body:JSON.stringify({action:'toggleVendor',id:id,active:active}), headers:{'Content-Type':'text/plain'} })
+    .then(function(r){ return r.json(); })
+    .then(function(d){ if(d.status==='ok'){ var v=vendors.filter(function(x){ return x.id===id; })[0]; if(v) v.active=active; renderVendors(); } });
+}
+function deleteVendor(id){
+  if(!confirm('Delete this vendor?')) return;
+  fetch(SHEET_URL,{ method:'POST', body:JSON.stringify({action:'deleteVendor',id:id}), headers:{'Content-Type':'text/plain'} })
+    .then(function(r){ return r.json(); })
+    .then(function(d){ if(d.status==='ok'){ vendors=vendors.filter(function(v){ return v.id!==id; }); renderVendors(); toast('Vendor deleted.','warn'); } });
+}
+
+// ── ACCOUNTS ──────────────────────────────────────────────────────────────────
+function renderAccounts(){
+  var tb=document.getElementById('acct-tbody'); if(!tb) return;
+  tb.innerHTML='';
+  if(accounts.length===0){ tb.innerHTML='<tr><td colspan="3" style="text-align:center;padding:24px;color:var(--muted);">No accounts yet.</td></tr>'; return; }
+  accounts.forEach(function(a){
+    var tr=document.createElement('tr');
+    tr.innerHTML='<td style="font-weight:600">'+esc(a.number)+'</td><td>'+esc(a.description)+'</td>'+
+      '<td><button class="btn-sm danger" onclick="deleteAccount(\''+a.id+'\')">Delete</button></td>';
+    tb.appendChild(tr);
+  });
+}
+function addAccount(){
+  var num=document.getElementById('new-acct-num').value.trim();
+  var desc=document.getElementById('new-acct-desc').value.trim();
+  if(!num||!desc){ toast('Please enter both account number and description.','error'); return; }
+  var id='acct-'+Date.now();
+  fetch(SHEET_URL,{ method:'POST', body:JSON.stringify({action:'saveAccount',id:id,number:num,description:desc}), headers:{'Content-Type':'text/plain'} })
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      if(d.status==='ok'){ accounts.push({id:id,number:num,description:desc,active:'Yes'}); document.getElementById('new-acct-num').value=''; document.getElementById('new-acct-desc').value=''; renderAccounts(); toast('Account added!','success'); }
+      else if(d.status==='duplicate'){ toast('Account number already exists.','warn'); }
+      else { toast('Could not add account.','error'); }
+    })
+    .catch(function(){ toast('Network error.','error'); });
+}
+function deleteAccount(id){
+  if(!confirm('Delete this account?')) return;
+  fetch(SHEET_URL,{ method:'POST', body:JSON.stringify({action:'deleteAccount',id:id}), headers:{'Content-Type':'text/plain'} })
+    .then(function(r){ return r.json(); })
+    .then(function(d){ if(d.status==='ok'){ accounts=accounts.filter(function(a){ return a.id!==id; }); renderAccounts(); toast('Account deleted.','warn'); } });
+}
+
+// ── REF CODES ─────────────────────────────────────────────────────────────────
+function renderRefCodes(){
+  var tb=document.getElementById('ref-tbody'); if(!tb) return;
+  tb.innerHTML='';
+  if(refcodes.length===0){ tb.innerHTML='<tr><td colspan="3" style="text-align:center;padding:24px;color:var(--muted);">No ref codes yet.</td></tr>'; return; }
+  refcodes.forEach(function(r){
+    var tr=document.createElement('tr');
+    tr.innerHTML='<td style="font-weight:600">'+esc(r.code)+'</td><td>'+esc(r.description)+'</td>'+
+      '<td><button class="btn-sm danger" onclick="deleteRefCode(\''+r.id+'\')">Delete</button></td>';
+    tb.appendChild(tr);
+  });
+}
+function addRefCode(){
+  var code=document.getElementById('new-ref-code').value.trim();
+  var desc=document.getElementById('new-ref-desc').value.trim();
+  if(!code||!desc){ toast('Please enter both ref code and description.','error'); return; }
+  var id='ref-'+Date.now();
+  fetch(SHEET_URL,{ method:'POST', body:JSON.stringify({action:'saveRefCode',id:id,code:code,description:desc}), headers:{'Content-Type':'text/plain'} })
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      if(d.status==='ok'){ refcodes.push({id:id,code:code,description:desc,active:'Yes'}); document.getElementById('new-ref-code').value=''; document.getElementById('new-ref-desc').value=''; renderRefCodes(); toast('Ref code added!','success'); }
+      else if(d.status==='duplicate'){ toast('Ref code already exists.','warn'); }
+      else { toast('Could not add ref code.','error'); }
+    })
+    .catch(function(){ toast('Network error.','error'); });
+}
+function deleteRefCode(id){
+  if(!confirm('Delete this ref code?')) return;
+  fetch(SHEET_URL,{ method:'POST', body:JSON.stringify({action:'deleteRefCode',id:id}), headers:{'Content-Type':'text/plain'} })
+    .then(function(r){ return r.json(); })
+    .then(function(d){ if(d.status==='ok'){ refcodes=refcodes.filter(function(r){ return r.id!==id; }); renderRefCodes(); toast('Ref code deleted.','warn'); } });
+}
+
+// ── CHANGE PASSWORD ───────────────────────────────────────────────────────────
+function changePassword(){
+  var np=document.getElementById('new-pw').value.trim();
+  var cp=document.getElementById('confirm-pw').value.trim();
+  clearErr('pw-err');
+  if(!np){ showErr('pw-err','Please enter a new password.'); return; }
+  if(np.length<6){ showErr('pw-err','Password must be at least 6 characters.'); return; }
+  if(np!==cp){ showErr('pw-err','Passwords do not match.'); return; }
+  fetch(SHEET_URL,{ method:'POST', body:JSON.stringify({action:'changePassword',username:session.username,newPassword:np}), headers:{'Content-Type':'text/plain'} })
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      if(d.status==='ok'){ document.getElementById('new-pw').value=''; document.getElementById('confirm-pw').value=''; toast('Password updated!','success'); }
+      else { toast('Could not update password.','error'); }
+    })
+    .catch(function(){ toast('Network error.','error'); });
+}
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+window.addEventListener('load', function(){ if(session) startApp(); });
+</script>
+</body>
+</html>
